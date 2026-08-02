@@ -451,6 +451,10 @@ const CONFIG = {
   reportEmail: "support@sigmadynamix.com",        // adresse principale de réception des résultats
   reportCc: "nicolas.a@sigmadynamix.com",         // copie de secours
   oneAttemptLock: true,        // false = version test sans verrou (relançable à volonté)
+  /* Codes de reprise À USAGE UNIQUE : .../assessment/?retake=CODE
+     Chaque code lève le verrou une seule fois, puis devient inutilisable.
+     Attribue un code par candidat et note à qui tu l'as donné. */
+  retakeCodes: ["RRRJCZOS", "RCVF3AM4", "RJ926WN4", "R6LQ0WEW", "RZWJRUA2", "RLO7DESQ", "R23R7JK8", "R4PQRMBC", "R16TFTMC", "RP48TLS7"],
   passCriteria: {
     minAvgSpread: 0,           // écart moyen vente−achat (métrique clé du modèle en paire)
     minPnlPts: 0,
@@ -529,10 +533,29 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v6.0";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+const BUILD = "v6.2";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
 document.addEventListener("DOMContentLoaded", ()=>{ $("buildTag").textContent = "· " + BUILD; });
-console.log("Sigma assessment build:", "v6.0");
-const ATTEMPT_KEY = "sigma_attempt";   // verrou une-seule-participation (localStorage ; à doubler côté serveur en prod)
+console.log("Sigma assessment build:", "v6.2");
+const ATTEMPT_KEY = "sigma_attempt";
+const RETAKE_USED_KEY = "sigma_retakes_used";
+/* Lien de reprise à usage unique : le code lève le verrou une fois, puis est consommé. */
+try{
+  const rc = (new URLSearchParams(location.search).get("retake") || "").trim().toUpperCase();
+  if(rc){
+    let used = [];
+    try{ used = JSON.parse(localStorage.getItem(RETAKE_USED_KEY) || "[]"); }catch(e){}
+    if(!CONFIG.retakeCodes.includes(rc)){
+      console.warn("Retake code not recognised.");
+    } else if(used.includes(rc)){
+      console.warn("Retake code already used on this browser.");
+    } else {
+      used.push(rc);
+      localStorage.setItem(RETAKE_USED_KEY, JSON.stringify(used));
+      localStorage.removeItem(ATTEMPT_KEY);
+      console.log("Retake granted — attempt lock cleared.");
+    }
+  }
+}catch(e){}   // verrou une-seule-participation (localStorage ; à doubler côté serveur en prod)
 const $ = id => document.getElementById(id);
 /* Heure de New York pour l'affichage (horloge + axes des graphiques).
    Si CONFIG.hideHours : l'heure est remplacée par "HH" (anti-triche). */
