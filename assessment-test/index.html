@@ -450,6 +450,7 @@ const CONFIG = {
   introFallbackSec: 180,       // filet de sécurité : déblocage du bouton si la voix off ne démarre jamais             // masque l'heure (HH:41:21) côté candidat — false en version test
   reportEmail: "support@sigmadynamix.com",        // adresse principale de réception des résultats
   reportCc: "nicolas.a@sigmadynamix.com",         // copie de secours
+  env: "TEST PLATFORM",           // remplacé par "TEST PLATFORM" dans la version interne sans verrou
   oneAttemptLock: false,        // false = version test sans verrou (relançable à volonté)
   /* Codes de reprise À USAGE UNIQUE : .../assessment/?retake=CODE
      Chaque code lève le verrou une seule fois, puis devient inutilisable.
@@ -533,9 +534,11 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v6.2";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
-document.addEventListener("DOMContentLoaded", ()=>{ $("buildTag").textContent = "· " + BUILD; });
-console.log("Sigma assessment build:", "v6.2");
+const BUILD = "v6.3";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+document.addEventListener("DOMContentLoaded", ()=>{
+  $("buildTag").textContent = "· " + BUILD + (CONFIG.env==="PRODUCTION" ? "" : " · TEST");
+});
+console.log("Sigma assessment build:", "v6.3");
 const ATTEMPT_KEY = "sigma_attempt";
 const RETAKE_USED_KEY = "sigma_retakes_used";
 /* Lien de reprise à usage unique : le code lève le verrou une fois, puis est consommé. */
@@ -552,6 +555,7 @@ try{
       used.push(rc);
       localStorage.setItem(RETAKE_USED_KEY, JSON.stringify(used));
       localStorage.removeItem(ATTEMPT_KEY);
+      window.__retakeCode = rc;
       console.log("Retake granted — attempt lock cleared.");
     }
   }
@@ -1660,6 +1664,9 @@ function showFinal(){
   /* export des résultats : fichier téléchargé par le candidat + email pré-rempli */
   const report = {
     platform: "sigma-assessment-v3",
+    build: BUILD,
+    environment: CONFIG.env,
+    retakeCode: window.__retakeCode || null,
     generatedUtc: new Date().toISOString(),
     candidate, screeningScore: candidate.score,
     sessions: EV.results.map(r=>({ day:r.day, startNY:r.ny,
@@ -1683,9 +1690,10 @@ function showFinal(){
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
-          _subject: `Assessment results — ${candidate.first} ${candidate.last} — PnL ${pnl.toFixed(2)} pts / spread ${avgSpread.toFixed(2)}`,
+          _subject: `${CONFIG.env==="PRODUCTION" ? "" : "[TEST PLATFORM] "}Assessment results — ${candidate.first} ${candidate.last} — PnL ${pnl.toFixed(2)} pts / spread ${avgSpread.toFixed(2)}`,
           _cc: CONFIG.reportCc,
           _template: "box",
+          source: `${CONFIG.env} · build ${BUILD}${window.__retakeCode ? " · RETAKE " + window.__retakeCode : ""}`,
           candidate: `${candidate.first} ${candidate.last} <${candidate.email}>`,
           screening_score: candidate.score,
           totals: `PnL ${pnl.toFixed(2)} pts | Avg spread ${avgSpread.toFixed(2)} | Win rate ${(winRate*100).toFixed(0)}% | Missed legs ${missed} | Reaction ${avgReact.toFixed(0)}s | Internal pass: ${pass}`,
