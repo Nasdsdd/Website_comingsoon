@@ -340,7 +340,7 @@
       <button id="btnPause">⏸ Pause</button>
     </div>
     <div class="pbox" id="log">
-      <div class="loghead">SIGNAL · BUY net · SELL net · SPREAD</div>
+      <div class="loghead">SIG · BUY net · SELL net · TOTAL · SPREAD</div>
       <table id="logTable"></table>
     </div>
   </div>
@@ -430,12 +430,13 @@ const CONFIG = {
   signalWindowSec: 120,        // fenêtre d'entrée : 2 minutes
   trailingTicks: 70,           // trailing SL de sortie (70 ticks = 17,5 pts NQ)
   /* ---- COÛTS DE TRADING (tous les chiffres affichés en sont nets) ----
-     spreadPts      : 0,25 pt à l'ENTRÉE (achat rempli +0,25 / vente −0,25)
-                      et 0,25 pt à la SORTIE MANUELLE uniquement
-     spreadOnStop   : false = un stop suiveur est exécuté à son prix, sans spread
-     commissionPts  : 0,25 pt prélevé sur chaque trade
-     => 0,75 pt par trade clôturé à la main, 0,50 pt si le stop se déclenche */
-  costs: { spreadPts: 0.25, commissionPts: 0.25, spreadOnStop: false },
+     spreadPts      : 0,50 pt = 2 ticks de décalage à l'ENTRÉE (achat +0,50 / vente −0,50)
+                      et 2 ticks à la SORTIE MANUELLE — identique à l'achat et à la vente
+     spreadOnStop   : false = un stop suiveur est exécuté à son prix, sans décalage
+     commissionPts  : 0,25 pt (1 tick) prélevé sur chaque trade
+     => par jambe : 4 ticks de décalage + 1 tick de frais = 1,25 pt
+        par signal (achat + vente) : 8 ticks de décalage + 2 ticks de frais = 2,50 pt */
+  costs: { spreadPts: 0.50, commissionPts: 0.25, spreadOnStop: false },
   auth: { dTicks: 50 },        // D du cycle leader (Step 1/2/3) — distinct du trailing de sortie
   demo: {                      // démo scriptée (journée du 14, heures New York)
     day: "2026-07-14",
@@ -528,9 +529,9 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v5.6";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+const BUILD = "v5.9";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
 document.addEventListener("DOMContentLoaded", ()=>{ $("buildTag").textContent = "· " + BUILD; });
-console.log("Sigma assessment build:", "v5.6");
+console.log("Sigma assessment build:", "v5.9");
 const ATTEMPT_KEY = "sigma_attempt";   // verrou une-seule-participation (localStorage ; à doubler côté serveur en prod)
 const $ = id => document.getElementById(id);
 /* Heure de New York pour l'affichage (horloge + axes des graphiques).
@@ -1168,10 +1169,12 @@ function finishSignal(){
 function logSignal(b, s, spread){
   const cell = r => (!r || r.result!=="trade") ? '<span class="m">—</span>'
     : `<span class="${r.pnl>=0?"w":"l"}">${r.pnl>=0?"+":""}${r.pnl.toFixed(2)}</span>`;
+  const net = (b && b.result==="trade" ? b.pnl : 0) + (s && s.result==="trade" ? s.pnl : 0);
   const row = $("logTable").insertRow(0);
   row.innerHTML = `<td class="num">#${S.sigIdx+1}</td>
     <td class="num">${cell(b)}</td>
     <td class="num">${cell(s)}</td>
+    <td class="num"><b class="${net>=0?"w":"l"}">${net>=0?"+":""}${net.toFixed(2)}</b></td>
     <td class="num ${spread!==null && spread>0 ? "w":"l"}">${spread===null ? "—" : (spread>0?"+":"")+spread.toFixed(2)}</td>`;
 }
 
@@ -1407,7 +1410,7 @@ const TOUR = [
   { el:"signalBox", title:"Authorization signal",
     text:"The spinning ring means the firm's lead strategy is computing. When its cycle completes, the lamp turns green — you are AUTHORIZED to enter. The countdown shows the time remaining: 2 min, 1 min, then the signal expires and counts as missed. Every candidate receives exactly the same signals." },
   { el:"orderBox",  title:"Order panel — two sides",
-    text:"Every signal requires BOTH sides: one BUY and one SELL, opened together or one after the other. Each has its own trailing stop of 70 ticks and its own Close button. You are filled at the spread when you enter and when you close manually, plus 0.25 point of commission; a trailing stop is executed at its own price. Every number you see, including this log, is net of those costs. The Spread line shows sell price minus buy price: keep it positive." },
+    text:"Every signal requires BOTH sides: one BUY and one SELL, opened together or one after the other. Each has its own trailing stop of 70 ticks and its own Close button. You are filled 2 ticks away when you enter and 2 ticks away when you close manually, plus 1 tick of commission per trade; a trailing stop is executed at its own price. Every number you see, including this log, is net of those costs. The Spread line shows sell price minus buy price: keep it positive." },
   { el:"log",       title:"Trade log",
     text:"One line per signal: the result of your buy, the result of your sell, and the spread between your two entry prices." },
   { el:"pauseBox",  title:"Next signal & Pause",
@@ -1478,7 +1481,7 @@ function showBrief(){
      On <b>each signal you must open both sides</b>: one BUY and one SELL — together or one after the other.<br>
      Entry window: <b>2 minutes</b> per signal — after that, the signal counts as missed.<br>
      Automatic ${CONFIG.trailingTicks}-tick trailing stop. Manual close available at any time.<br>
-     Real trading costs are applied: you are filled at the spread when you enter and when you close manually, plus ${CONFIG.costs.commissionPts} point of commission. A trailing stop is executed at its own price. Every figure shown is <b>net</b> of these costs.<br>
+     Real trading costs are applied: 2 ticks of slippage when you enter and 2 ticks when you close manually, plus 1 tick of commission per trade. A trailing stop is executed at its own price. Every figure shown is <b>net</b> of these costs.<br>
      "Next signal" fast-forwards the replay to just before the next authorization.<br>
      Pause is allowed between signals only.`;
   $("stageBrief").classList.remove("hidden");
