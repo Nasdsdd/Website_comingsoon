@@ -540,11 +540,11 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v7.1";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+const BUILD = "v7.2";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
 document.addEventListener("DOMContentLoaded", ()=>{
   $("buildTag").textContent = "· " + BUILD + (CONFIG.env==="PRODUCTION" ? "" : " · TEST");
 });
-console.log("Sigma assessment build:", "v7.1");
+console.log("Sigma assessment build:", "v7.2");
 const ATTEMPT_KEY = "sigma_attempt";
 const RETAKE_USED_KEY = "sigma_retakes_used";
 /* Lien de reprise à usage unique : le code lève le verrou une fois, puis est consommé. */
@@ -1775,7 +1775,7 @@ function showFinal(){
         method: "POST",
         headers: { "Content-Type": "application/json", "Accept": "application/json" },
         body: JSON.stringify({
-          _subject: `${CONFIG.env==="PRODUCTION" ? "" : "[TEST PLATFORM] "}Assessment results — ${candidate.first} ${candidate.last} — PnL ${pnl.toFixed(2)} pts / spread ${avgSpread.toFixed(2)}`,
+          _subject: `${CONFIG.env==="PRODUCTION" ? "" : "[TEST PLATFORM] "}Assessment results — PnL ${pnl.toFixed(2)} pts - spread ${avgSpread.toFixed(2)} — ${candidate.first} ${candidate.last}`,
           _cc: CONFIG.reportCc,
           _template: "box",
           source: `${CONFIG.env} · build ${BUILD}${window.__retakeCode ? " · RETAKE " + window.__retakeCode : ""}`,
@@ -1816,11 +1816,11 @@ function showFinal(){
     const blob = new Blob([JSON.stringify(report,null,1)], {type:"application/json"});
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `sigma_results_${candidate.last}_${candidate.first}.json`.replace(/\s+/g,"_");
+    a.download = `Assessment results - PnL ${pnl.toFixed(2)} pts - spread ${avgSpread.toFixed(2)} - ${candidate.first} ${candidate.last}.json`.replace(/\s+/g,"_");
     a.click();
   };
   $("btnMailResults").onclick = ()=>{
-    const subj = encodeURIComponent(`Assessment results — ${candidate.first} ${candidate.last}`);
+    const subj = encodeURIComponent(`Assessment results — PnL ${pnl.toFixed(2)} pts - spread ${avgSpread.toFixed(2)} — ${candidate.first} ${candidate.last}`);
     const body = encodeURIComponent(
       `Hello,\n\nPlease find attached my assessment results file.\n\n` +
       `Name: ${candidate.first} ${candidate.last}\nEmail: ${candidate.email}\n` +
