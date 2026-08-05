@@ -273,10 +273,16 @@
   if (!cvs || !cvs.getContext) return;
   var ctx = cvs.getContext('2d');
 
-  var STEP = 3;          // px between samples
-  var BASE_VOL = 0.55;   // resting volatility
+  // --- tape character: raise BASE_VOL / BURST_ODDS / GAP_ODDS for a wilder market
+  var STEP = 3;           // px between samples
+  var BASE_VOL = 1.25;    // resting volatility
+  var VOL_DECAY = 0.004;  // how fast a burst calms down (lower = longer bursts)
+  var BURST_ODDS = 0.011; // chance per tick of a volatility burst
+  var GAP_ODDS = 0.0035;  // chance per tick of a news gap
+  var TREND_STR = 0.06;   // how strongly the tape drifts in one direction
+  var SCALE = 165;        // price units mapped to the full amplitude
   var W = 0, H = 0, dpr = 1;
-  var pts = [], price = 0, vol = BASE_VOL;
+  var pts = [], price = 0, vol = BASE_VOL, trend = 0;
 
   var reduced = window.matchMedia &&
                 window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -289,11 +295,24 @@
   }
 
   function step() {
-    // volatility mean-reverts, with occasional bursts
-    vol += (BASE_VOL - vol) * 0.006;
-    if (Math.random() < 0.0045) vol += 1.5 + Math.random() * 2.2;
-    price += gauss() * vol;
-    price += (0 - price) * 0.004;   // drift back to the mid
+    // volatility clusters: it mean-reverts slowly and spikes in bursts
+    vol += (BASE_VOL - vol) * VOL_DECAY;
+    if (Math.random() < BURST_ODDS) vol += 2.4 + Math.random() * 4.8;
+    if (vol > 10) vol = 10;
+
+    // slow directional bias, so the tape trends instead of only shaking
+    trend += gauss() * TREND_STR - trend * 0.022;
+
+    price += gauss() * vol + trend;
+
+    // news gap: a single violent tick
+    if (Math.random() < GAP_ODDS) {
+      price += (Math.random() < 0.5 ? -1 : 1) * (8 + Math.random() * 16);
+      vol += 3;
+    }
+
+    // pull back to the mid, harder the further it strays
+    price -= price * (0.0022 + Math.abs(price) * 0.00012);
     return price;
   }
 
@@ -311,9 +330,11 @@
   }
 
   function yOf(p) {
-    var amp = Math.min(H / 2 - 12, 140);
-    var y = H / 2 - p * 0.95;
-    return Math.max(H / 2 - amp, Math.min(H / 2 + amp, y));
+    var amp = Math.min(H / 2 - 12, 150);
+    var t = p / SCALE;
+    // tanh keeps big moves on screen instead of clipping them into a flat line
+    var squash = (Math.exp(t) - Math.exp(-t)) / (Math.exp(t) + Math.exp(-t));
+    return H / 2 - amp * squash;
   }
 
   function draw() {
@@ -377,6 +398,7 @@
     draw();
   } else {
     // warm the series up so it doesn't start as a flat line
+    for (var w = 0; w < 400; w++) step();
     for (var j = 0; j < pts.length; j++) pts[j] = step();
     requestAnimationFrame(loop);
   }
