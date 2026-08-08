@@ -219,6 +219,11 @@
     <label for="fFirst">First name</label><input type="text" id="fFirst" autocomplete="given-name">
     <label for="fLast">Last name</label><input type="text" id="fLast" autocomplete="family-name">
     <label for="fEmail">Email</label><input type="email" id="fEmail" autocomplete="email">
+    <label for="fCountry">Country of residence</label>
+    <select id="fCountry" autocomplete="country-name"
+      style="width:100%;padding:11px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel2);color:var(--text);font-size:15px">
+      <option value="">— Select your country —</option>
+    </select>
     <div id="questions"></div>
     <div class="err hidden" id="formErr"></div>
     <button class="btn" id="btnSubmitForm">Submit application</button>
@@ -540,11 +545,11 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v7.2";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+const BUILD = "v7.3";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
 document.addEventListener("DOMContentLoaded", ()=>{
   $("buildTag").textContent = "· " + BUILD + (CONFIG.env==="PRODUCTION" ? "" : " · TEST");
 });
-console.log("Sigma assessment build:", "v7.2");
+console.log("Sigma assessment build:", "v7.3");
 const ATTEMPT_KEY = "sigma_attempt";
 const RETAKE_USED_KEY = "sigma_retakes_used";
 /* Lien de reprise à usage unique : le code lève le verrou une fois, puis est consommé. */
@@ -746,6 +751,24 @@ $("btnVideoNext").addEventListener("click", ()=>{
    ================================================================ */
 const candidate = { first:"", last:"", email:"", score:0 };
 
+/* Liste des pays : codes ISO 3166-1, noms résolus par le navigateur */
+(function renderCountries(){
+  const CC = "AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(" ");
+  let name = c => c;
+  try{
+    const dn = new Intl.DisplayNames(["en"], { type:"region" });
+    name = c => dn.of(c) || c;
+  }catch(e){}
+  const sel = $("fCountry");
+  CC.map(c => ({ c, n: name(c) }))
+    .sort((a,b) => a.n.localeCompare(b.n, "en"))
+    .forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.c; opt.textContent = o.n;
+      sel.appendChild(opt);
+    });
+})();
+
 (function renderQuestions(){
   const wrap = $("questions");
   QUESTIONNAIRE.questions.forEach((q,qi)=>{
@@ -776,8 +799,15 @@ $("btnSubmitForm").addEventListener("click", ()=>{
   candidate.first = $("fFirst").value.trim();
   candidate.last = $("fLast").value.trim();
   candidate.email = $("fEmail").value.trim().toLowerCase();
+  candidate.countryCode = $("fCountry").value;
+  candidate.country = $("fCountry").selectedOptions[0]
+    ? $("fCountry").selectedOptions[0].textContent : "";
   if(!candidate.first || !candidate.last || !candidate.email.includes("@")){
     err.textContent = "Please fill in first name, last name and a valid email.";
+    err.classList.remove("hidden"); return;
+  }
+  if(!candidate.countryCode){
+    err.textContent = "Please select your country of residence.";
     err.classList.remove("hidden"); return;
   }
   const flag = (CONFIG.oneAttemptLock && !CONFIG.backend) ? attemptFlag() : null;
@@ -1779,7 +1809,7 @@ function showFinal(){
           _cc: CONFIG.reportCc,
           _template: "box",
           source: `${CONFIG.env} · build ${BUILD}${window.__retakeCode ? " · RETAKE " + window.__retakeCode : ""}`,
-          candidate: `${candidate.first} ${candidate.last} <${candidate.email}>`,
+          candidate: `${candidate.first} ${candidate.last} <${candidate.email}> · ${candidate.country || "—"}`,
           screening_score: candidate.score,
           totals: `PnL ${pnl.toFixed(2)} pts | Avg spread ${avgSpread.toFixed(2)} | Win rate ${(winRate*100).toFixed(0)}% | Missed legs ${missed} | Reaction ${avgReact.toFixed(0)}s | Internal pass: ${pass}`,
           sessions_summary: EV.results.map((r,i)=>`S${i+1} ${r.day}: ${r.pnl.toFixed(2)} pts, spread ${r.avgSpread.toFixed(2)}, ${(r.winRate*100).toFixed(0)}%, ${r.missed} missed legs`).join(" | "),
