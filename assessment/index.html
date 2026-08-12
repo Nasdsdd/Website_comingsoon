@@ -545,11 +545,11 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v7.3";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+const BUILD = "v7.4";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
 document.addEventListener("DOMContentLoaded", ()=>{
   $("buildTag").textContent = "· " + BUILD + (CONFIG.env==="PRODUCTION" ? "" : " · TEST");
 });
-console.log("Sigma assessment build:", "v7.3");
+console.log("Sigma assessment build:", "v7.4");
 const ATTEMPT_KEY = "sigma_attempt";
 const RETAKE_USED_KEY = "sigma_retakes_used";
 /* Lien de reprise à usage unique : le code lève le verrou une fois, puis est consommé. */
@@ -859,28 +859,47 @@ function fingerprint(){
   }catch(e){ return {}; }
 }
 
-async function callBackend(fn, payload){
+async function callBackend(fn, payload, timeoutMs = 20000){
   /* clé passée en paramètre d'URL et content-type simple : la requête est
      considérée comme "simple" par le navigateur, aucune préparation CORS. */
   const url = `${CONFIG.backend.url}/functions/v1/${fn}?apikey=${encodeURIComponent(CONFIG.backend.key)}`;
-  const r = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=UTF-8" },
-    body: JSON.stringify(payload)
-  });
-  let data = {};
-  try{ data = await r.json(); }catch(e){}
-  return { status: r.status, data };
+  const ctrl = new AbortController();
+  const timer = setTimeout(()=>ctrl.abort(), timeoutMs);
+  try{
+    const r = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
+      body: JSON.stringify(payload),
+      signal: ctrl.signal
+    });
+    let data = {};
+    try{ data = await r.json(); }catch(e){}
+    /* projet Supabase en pause ou en cours de réveil */
+    if(r.status === 503 || r.status === 504 || r.status === 540)
+      return { status: r.status, data: { error: "service_paused" }, unreachable: true };
+    if(r.status >= 500)
+      return { status: r.status, data: { error: "service_unavailable" }, unreachable: true };
+    return { status: r.status, data };
+  }catch(e){
+    /* pas de réponse du tout : réseau coupé, projet injoignable, délai dépassé */
+    console.warn("backend unreachable:", e && e.name, e && e.message);
+    return { status: 0, data: { error: "service_unavailable" }, unreachable: true };
+  }finally{
+    clearTimeout(timer);
+  }
 }
 
+const SUPPORT_EMAIL = "support@sigmadynamix.com";
 const BACKEND_MESSAGES = {
+  service_unavailable: `Our assessment service is temporarily unavailable. This is on our side, not yours — please try again in a few minutes. If the problem persists, email us at ${SUPPORT_EMAIL} and we will get you back on track.`,
+  service_paused:      `Our assessment service is waking up. Please wait a minute and click the button again. If it still fails, email us at ${SUPPORT_EMAIL}.`,
   already_completed: "Our records show you have already completed this assessment. Each candidate may only take it once.",
   already_started:   "An assessment has already been started with these details. If you were interrupted, please contact us so we can reopen it for you.",
   revoked:           "This assessment link is no longer valid. Please contact us.",
   invalid_token:     "This assessment link is not recognised. Please check the link we sent you.",
   missing_identity:  "Please provide your name and a valid email address.",
   pack_unavailable:  "Market data is temporarily unavailable. Please try again in a few minutes.",
-  default:           "We could not start the assessment. Please check your connection and try again."
+  default:           `We could not start the assessment. Please check your connection and try again — and if it keeps failing, email us at ${SUPPORT_EMAIL}.`
 };
 
 /* Récupère les journées attribuées par le serveur puis télécharge les packs */
@@ -890,7 +909,12 @@ async function requestSession(){
   const payload = t ? { token: t, fingerprint: fingerprint() }
                     : { name: `${candidate.first} ${candidate.last}`,
                         email: candidate.email, fingerprint: fingerprint() };
-  const { status, data } = await callBackend("start-attempt", payload);
+  let { status, data, unreachable } = await callBackend("start-attempt", payload);
+  /* le projet peut être en train de se réveiller : on retente une fois après 6 s */
+  if(unreachable){
+    await new Promise(r=>setTimeout(r, 6000));
+    ({ status, data, unreachable } = await callBackend("start-attempt", payload));
+  }
   if(status !== 200 || !data.ok){
     const msg = BACKEND_MESSAGES[data.error] || BACKEND_MESSAGES.default;
     const err = new Error(msg); err.code = data.error; throw err;
