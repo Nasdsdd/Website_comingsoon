@@ -42,8 +42,48 @@ a{color:inherit;text-decoration:none}
   border-bottom:1px solid var(--line);
 }
 .nav-in{display:flex;align-items:center;justify-content:space-between;height:64px}
-.brand{display:flex;align-items:center;gap:10px;font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.02em}
+.brand{display:flex;align-items:center;gap:10px;transition:opacity .18s;font-family:'Space Grotesk',sans-serif;font-weight:700;letter-spacing:.02em}
 .brand .mark{width:26px;height:26px;border-radius:7px;display:block}
+.brand:hover{opacity:.75}
+.nav-right{display:flex;align-items:center;gap:18px}
+.btn-contact{
+  background:none;border:1px solid var(--line-strong);border-radius:8px;cursor:pointer;
+  color:var(--text);font-family:'Inter',sans-serif;font-size:13.5px;padding:8px 14px;
+  transition:border-color .18s,background .18s;
+}
+.btn-contact:hover{border-color:var(--blue);background:var(--blue-soft)}
+
+/* ---------- modale contact ---------- */
+.overlay{
+  position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px;
+  background:rgba(3,5,10,.72);backdrop-filter:blur(4px);
+}
+.overlay[hidden]{display:none}
+.modal{
+  width:100%;max-width:400px;background:var(--navy);border:1px solid var(--line-strong);
+  border-radius:16px;padding:28px;position:relative;
+}
+.modal h3{font-family:'Space Grotesk',sans-serif;font-weight:600;font-size:19px;margin:0 0 8px}
+.modal p{color:var(--muted);font-size:14px;margin:0 0 20px}
+.mail{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  background:var(--void);border:1px solid var(--line);border-radius:10px;padding:13px 15px;
+}
+.mail a{font-family:'IBM Plex Mono',monospace;font-size:13.5px;color:var(--blue);word-break:break-all}
+.mail a:hover{text-decoration:underline}
+.copy{
+  background:none;border:1px solid var(--line-strong);border-radius:7px;cursor:pointer;
+  color:var(--muted);font-family:'Inter',sans-serif;font-size:12.5px;padding:6px 11px;flex:none;
+  transition:color .18s,border-color .18s;
+}
+.copy:hover{color:var(--text);border-color:var(--blue)}
+.close{
+  position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;
+  color:var(--muted);font-size:22px;line-height:1;padding:6px;border-radius:6px;
+}
+.close:hover{color:var(--text)}
+.nav-tag{font-family:'IBM Plex Mono',monospace;font-size:11.5px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted)}
 .nav-links{display:flex;align-items:center;gap:26px;font-size:14px;color:var(--muted)}
 .nav-links a:hover{color:var(--text)}
 .nav-links a.active{color:var(--text)}
@@ -159,6 +199,10 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
   .soft-side{border-left:none;border-top:1px solid var(--line)}
   .nav-links{gap:16px;font-size:13px}
   .nav-links .hide-sm{display:none}
+  .nav-tag{display:none}
+  .modal{padding:24px 20px}
+  .mail{flex-direction:column;align-items:stretch;gap:10px}
+  .copy{align-self:flex-start}
 }
 :focus-visible{outline:2px solid var(--blue);outline-offset:3px;border-radius:6px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
@@ -169,10 +213,9 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
 <nav class="nav">
   <div class="wrap nav-in">
     <a class="brand" href="index.html"><img class="mark" src="data:image/png;base64,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" alt="">SIGMA DYNAMIX</a>
-    <div class="nav-links">
-      <a href="index.html" class="hide-sm">Home</a>
-      <a href="resources.html" class="active">Resources</a>
-      <a class="btn-login" href="index.html#contact">Contact</a>
+    <div class="nav-right">
+      <span class="nav-tag">Operator resources</span>
+      <button class="btn-contact" id="contactBtn">Contact</button>
     </div>
   </div>
 </nav>
@@ -263,6 +306,18 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
   </div>
 </section>
 
+<div class="overlay" id="contactModal" hidden role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+  <div class="modal">
+    <button class="close" id="contactClose" aria-label="Close">&times;</button>
+    <h3 id="contactTitle">Contact</h3>
+    <p>Lost your access link, or something not working? Write to us and we'll sort it out.</p>
+    <div class="mail">
+      <a href="mailto:support@sigmadynamix.com">support@sigmadynamix.com</a>
+      <button class="copy" id="contactCopy">Copy</button>
+    </div>
+  </div>
+</div>
+
 <footer>
   <div class="wrap foot-in">
     <span>© <span id="yr"></span> Sigma Dynamix</span>
@@ -325,6 +380,37 @@ document.getElementById("verTag").textContent = CFG.BUILD.version;
 document.getElementById("mSize").textContent  = CFG.BUILD.sizeMB === "—" ? "— MB" : CFG.BUILD.sizeMB + " MB";
 document.getElementById("mDate").textContent  = CFG.BUILD.date;
 document.getElementById("yr").textContent     = new Date().getFullYear();
+
+/* ---------- modale contact ---------- */
+const cModal = document.getElementById("contactModal");
+const cCopy  = document.getElementById("contactCopy");
+let cOpener = null;
+
+function openContact(){
+  cOpener = document.activeElement;
+  cModal.hidden = false;
+  document.getElementById("contactClose").focus();
+}
+function closeContact(){
+  cModal.hidden = true;
+  cCopy.textContent = "Copy";
+  if (cOpener) cOpener.focus();
+}
+
+document.getElementById("contactBtn").addEventListener("click", openContact);
+document.getElementById("contactClose").addEventListener("click", closeContact);
+cModal.addEventListener("click", e => { if (e.target === cModal) closeContact(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !cModal.hidden) closeContact(); });
+
+cCopy.addEventListener("click", async () => {
+  try{
+    await navigator.clipboard.writeText("support@sigmadynamix.com");
+    cCopy.textContent = "Copied";
+  }catch{
+    cCopy.textContent = "Select it";
+  }
+  setTimeout(() => { cCopy.textContent = "Copy"; }, 2000);
+});
 
 /* ---------- code d'accès ----------
    Lu depuis le fragment de l'URL (#k=CODE) : contrairement à ?k=CODE,
