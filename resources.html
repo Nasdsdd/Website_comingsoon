@@ -251,6 +251,16 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
   </div>
 </section>
 
+<section id="guides">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Guides</h2>
+      <span class="sec-note">Written references</span>
+    </div>
+    <div class="grid" id="guideGrid"></div>
+  </div>
+</section>
+
 <section id="software">
   <div class="wrap">
     <div class="sec-head">
@@ -261,7 +271,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
     <div class="soft">
       <div class="soft-main">
         <div class="ver">
-          <h3>Sigma Terminal</h3>
+          <h3>Sigma Dynamix Terminal</h3>
           <span class="tag-live" id="verTag">v1.0.0</span>
         </div>
         <p style="color:var(--muted);margin:0;max-width:52ch">The desktop application you use to receive authorization signals and place your leg during the session.</p>
@@ -270,6 +280,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
           <div><span class="k">Size</span><span class="v" id="mSize">— MB</span></div>
           <div><span class="k">Released</span><span class="v" id="mDate">—</span></div>
           <div><span class="k">Platform</span><span class="v">Windows</span></div>
+          <div><span class="k">Hosting</span><span class="v">TransferNow</span></div>
         </div>
 
         <button class="btn" id="dlBtn">
@@ -278,7 +289,7 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
           </svg>
           Download terminal
         </button>
-        <p class="btn-note" id="dlNote">Enter your access code to download.</p>
+        <p class="btn-note" id="dlNote">Enter your access code to get the download.</p>
 
         <div class="log">
           <p class="side-title">Release notes</p>
@@ -334,13 +345,22 @@ footer{border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-s
 const TUTORIALS = [
   { id:"connection", title:"Connecting to the platform",
     blurb:"Signing in to the terminal, checking your account is live and confirming the data feed before the session.",
-    tag:"Setup", len:"1:12" },
+    tag:"Setup", meta:"1:12 · video" },
   { id:"workspace", title:"Setting up your workspace",
     blurb:"Arranging the chart, the signal panel and the order ticket so everything you need is visible at a glance.",
-    tag:"Setup", len:"1:06" },
+    tag:"Setup", meta:"1:06 · video" },
   { id:"trading", title:"Trading a session",
     blurb:"The full sequence: waiting for the authorization signal, placing your leg, and managing the trailing stop to the close.",
-    tag:"Trading", len:"4:30" },
+    tag:"Trading", meta:"5:34 · video" },
+];
+
+const GUIDES = [
+  { id:"server-setup", title:"Server setup",
+    blurb:"Connecting to the Sigma Dynamix VPS from Windows or Mac: installing the Windows App, adding the PC, and launching the terminal.",
+    tag:"VPS", meta:"Step-by-step guide" },
+  { id:"faq", title:"Trader FAQ",
+    blurb:"The questions operators ask most often, from account setup to what to do when something goes wrong mid-session.",
+    tag:"Reference", meta:"Reference" },
 ];
 
 /* ============================================================
@@ -351,17 +371,16 @@ const CFG = {
   SUPABASE_URL : "https://jkpycxekmljbomkdhfhc.supabase.co",
   ANON_KEY     : "sb_publishable_T1pafKvZ69IHji77doaGSw_3JTsSQS9",
   FUNCTION     : "get-resource",
-  SHOW_TERMINAL: false,   // passe à true quand le zip sera dans le bucket
+  SHOW_TERMINAL: true,
   BUILD        : { version:"v1.0.0", sizeMB:"—", date:"—" }, // renseigné par la fonction si dispo
 };
 
 const CHANGELOG = [
-  { date:"2026-08-10", text:"Initial release." },
+  { date:"2026-08-14", text:"Build v2.3.11.35." },
 ];
 
 /* ---------- rendu ---------- */
-const grid = document.getElementById("tutorialGrid");
-grid.innerHTML = TUTORIALS.map((t,i)=>`
+const card = (t, i) => `
   <a class="card" href="tutorial.html?t=${t.id}">
     <div class="card-top">
       <span class="idx">${String(i+1).padStart(2,"0")}</span>
@@ -369,8 +388,13 @@ grid.innerHTML = TUTORIALS.map((t,i)=>`
     </div>
     <h3>${t.title}</h3>
     <p>${t.blurb}</p>
-    <div class="card-foot"><span class="dur">${t.len} · video</span><span class="go">Open →</span></div>
-  </a>`).join("");
+    <div class="card-foot"><span class="dur">${t.meta}</span><span class="go">Open →</span></div>
+  </a>`;
+
+const grid  = document.getElementById("tutorialGrid");
+const grid2 = document.getElementById("guideGrid");
+grid.innerHTML  = TUTORIALS.map(card).join("");
+grid2.innerHTML = GUIDES.map(card).join("");
 
 if (!CFG.SHOW_TERMINAL) document.getElementById("software").hidden = true;
 
@@ -460,9 +484,9 @@ function lock(msg){
   gateForm.style.display = "flex";
   gateTitle.textContent = msg ? "Access denied" : "Access code required";
   gateMsg.textContent = msg || "Use the link Sigma Dynamix sent you, or enter your code below.";
-  grid.classList.add("locked");
+  [grid, grid2].forEach(g => g.classList.add("locked"));
   soft?.classList.add("locked");
-  setNote("Enter your access code to download.");
+  setNote("Enter your access code to get the download.");
 }
 
 function unlock(label, until){
@@ -480,11 +504,11 @@ function unlock(label, until){
          : " This link expires today.";
   }
   gateMsg.textContent = msg + " It's personal — please don't share it.";
-  grid.classList.remove("locked");
+  [grid, grid2].forEach(g => g.classList.remove("locked"));
   soft?.classList.remove("locked");
-  setNote("Your download link is generated on demand and expires after 5 minutes.");
+  setNote("The download opens in a new tab.");
   // le code voyage dans le lien vers le lecteur de tutoriels
-  grid.querySelectorAll("a.card").forEach(a => {
+  document.querySelectorAll("a.card").forEach(a => {
     a.href = a.href.split("#")[0] + "#k=" + encodeURIComponent(CODE);
   });
 }
@@ -530,8 +554,13 @@ btn?.addEventListener("click", async () => {
     if (d.sizeMB)  document.getElementById("mSize").textContent  = d.sizeMB + " MB";
     if (d.date)    document.getElementById("mDate").textContent  = d.date;
 
-    setNote("Download started. The link expires in 5 minutes.");
-    location.href = d.url;
+    if (d.external){
+      window.open(d.url, "_blank", "noopener");
+      setNote("Opening the download page in a new tab.");
+    } else {
+      setNote("Download started. The link expires in 5 minutes.");
+      location.href = d.url;
+    }
   } catch (e) {
     setNote(e.message === "Failed to fetch"
       ? "Could not reach the server. Check your connection and try again."

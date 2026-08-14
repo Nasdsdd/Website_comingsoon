@@ -77,9 +77,11 @@ const CFG = {
 
 /* Titres affichés dans la barre — mêmes identifiants que dans resources.html */
 const TITLES = {
-  "connection":"Connecting to the platform",
-  "workspace" :"Setting up your workspace",
-  "trading"   :"Trading a session",
+  "connection"  :"Connecting to the platform",
+  "workspace"   :"Setting up your workspace",
+  "trading"     :"Trading a session",
+  "server-setup":"Server setup",
+  "faq"         :"Trader FAQ",
 };
 
 const SKEY = "sdx_access_code";
@@ -130,15 +132,17 @@ function fail(title, msg){
       return x.text();
     });
 
+    // Les pages sans média (guides, FAQ) sont montées telles quelles.
     const decl = html.match(/<script type="__sdx\/media">(.*?)<\/script>/);
-    if (!decl) throw new Error("This tutorial has not been prepared for streaming.");
-    const map = {};
-    for (const [uuid, file] of Object.entries(JSON.parse(decl[1]))){
-      map[uuid] = file.endsWith(".mp4") ? d.video : d.audio;
+    let patched = html;
+    if (decl && d.video){
+      const map = {};
+      for (const [uuid, file] of Object.entries(JSON.parse(decl[1]))){
+        map[uuid] = file.endsWith(".mp4") ? d.video : d.audio;
+      }
+      patched = html.replace("</head>",
+        `<script>window.__SDX_MEDIA=${JSON.stringify(map)};<\/script></head>`);
     }
-
-    const patched = html.replace("</head>",
-      `<script>window.__SDX_MEDIA=${JSON.stringify(map)};<\/script></head>`);
 
     // 3. Montage dans l'iframe via une URL blob (même origine que cette page).
     const frame = document.getElementById("frame");
