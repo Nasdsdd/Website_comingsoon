@@ -543,7 +543,7 @@
     <button class="btn hidden" id="btnDlResults">⬇ Download my results file</button>
     <button class="btn ghost hidden" id="btnMailResults">✉ Open email</button>
     <br>
-    <button class="btn ghost" id="btnReset" style="margin-top:8px;opacity:.6">Reset (testing only)</button>
+    <button class="btn ghost hidden" id="btnReset" style="margin-top:8px;opacity:.6">Reset (testing only)</button>
   </div>
 </div>
 
@@ -820,6 +820,8 @@ function decodePack(p){
   return { id:p.id, day:p.day, symbol:p.symbol, tickSize:p.tickSize, ticks };
 }
 window.addEventListener("DOMContentLoaded", async ()=>{
+  /* outil de développement : jamais visible par un candidat */
+  if(CONFIG.env !== "PRODUCTION") $("btnReset").classList.remove("hidden");
   EMBEDDED_PACKS.forEach(p=>packs.push(decodePack(p)));
   TEST_PACKS.forEach(p=>packs.push(decodePack(p)));
   /* Le bras doit être connu avant d'afficher quoi que ce soit : présentation,
@@ -1055,7 +1057,7 @@ function attemptFlag(){
   try{ return JSON.parse(localStorage.getItem(ATTEMPT_KEY)||"null"); }catch(e){ return null; }
 }
 
-$("btnSubmitForm").addEventListener("click", ()=>{
+$("btnSubmitForm").addEventListener("click", async ()=>{
   const err = $("formErr"); err.classList.add("hidden");
   candidate.first = $("fFirst").value.trim();
   candidate.last = $("fLast").value.trim();
@@ -1094,6 +1096,31 @@ $("btnSubmitForm").addEventListener("click", ()=>{
   if(missing){ err.textContent = "Please answer every question.";
     err.classList.remove("hidden"); return; }
   candidate.score = score;
+
+  /* Adresse déjà utilisée ? On le dit ici plutôt que dix minutes plus tard.
+     Le serveur ne crée rien : il regarde seulement s'il existe déjà une
+     tentative pour cette adresse. Une panne réseau ne bloque pas le candidat,
+     le contrôle définitif reste celui de start-attempt. */
+  const btn = $("btnSubmitForm");
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = "Checking…";
+  let used = null;
+  try{
+    const { status, data } = await callBackend(
+      "start-attempt", { check: true, email: candidate.email }, 10000);
+    if(status === 200 && data.ok) used = data.used ? (data.reason || "already_started") : false;
+  }catch(e){ /* injoignable : on laisse passer */ }
+  btn.disabled = false; btn.textContent = label;
+
+  if(used){
+    $("stage1").classList.add("hidden");
+    const b = $("stageBlocked");
+    const p = b.querySelector("p") || b;
+    p.textContent = (BACKEND_MESSAGES[used] || BACKEND_MESSAGES.already_started);
+    b.classList.remove("hidden");
+    return;
+  }
+
   $("stage1").classList.add("hidden");
   /* réponses non éliminatoires : tout le monde passe à la suite ;
      le score sert au classement côté Sigma Dynamix */
