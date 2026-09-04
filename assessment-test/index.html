@@ -306,6 +306,26 @@
   </div>
 </header>
 
+
+<!-- ===== PRÉREQUIS ORDINATEUR ===== -->
+<div class="stage hidden" id="stageDesktop">
+  <div class="card">
+    <h2>A computer is required</h2>
+    <p class="lead">
+      This assessment is a live trading simulation. It needs a large screen and a mouse:
+      you will be reading two price charts and placing orders under time pressure.
+      <b>It cannot be completed on a phone or a small tablet.</b><br><br>
+      Please open this page again on a desktop or laptop computer:<br>
+      <b style="font-family:var(--mono)">sigmadynamix.com/assessment/</b><br><br>
+      Nothing has been recorded — your application starts when you open it on a computer.
+    </p>
+    <p style="font-size:13px;color:var(--muted);margin-top:18px">
+      Already on a computer? Widen your browser window, or
+      <a href="#" id="lnkDesktopAnyway" style="color:var(--link)">continue anyway</a>.
+    </p>
+  </div>
+</div>
+
 <!-- ===== STAGE 0 : DAY PACKS (admin/prep — invisible in production) ===== -->
 <div class="stage" id="stage0">
   <div class="card">
@@ -854,6 +874,38 @@ window.addEventListener("DOMContentLoaded", async ()=>{
   TEST_PACKS.forEach(p=>packs.push(decodePack(p)));
   /* Le bras doit être connu avant d'afficher quoi que ce soit : présentation,
      FAQ et démo en dépendent toutes les trois. */
+  /* Prérequis ordinateur. Placé AVANT resolveArm : un visiteur mobile ne doit
+     pas consommer un tour de rotation des bras, sinon la grille se déséquilibre
+     au profit de gens qui n'iront jamais au bout.
+     La détection combine deux signaux plutôt qu'un seul : un écran étroit peut
+     être une fenêtre réduite sur un ordinateur, et une grande tablette avec
+     clavier reste utilisable. */
+  const needsDesktop = () => {
+    const coarse = window.matchMedia
+      && matchMedia("(pointer: coarse)").matches && matchMedia("(hover: none)").matches;
+    return coarse || window.innerWidth < 900;
+  };
+  const override = (()=>{ try{ return sessionStorage.getItem("sigma_desktop_ok") === "1"; }
+                          catch(e){ return false; } })();
+  if(needsDesktop() && !override){
+    $("stage0").classList.add("hidden");
+    $("stageDesktop").classList.remove("hidden");
+    /* fenêtre simplement trop étroite sur un vrai ordinateur : on repart seul */
+    const retry = ()=>{
+      if(!needsDesktop()){
+        window.removeEventListener("resize", retry);
+        location.reload();
+      }
+    };
+    window.addEventListener("resize", retry);
+    $("lnkDesktopAnyway").addEventListener("click", e=>{
+      e.preventDefault();
+      try{ sessionStorage.setItem("sigma_desktop_ok", "1"); }catch(e){}
+      location.reload();
+    });
+    return;
+  }
+
   const ok = await resolveArm();
   if(!ok){
     $("stage0").classList.add("hidden");
