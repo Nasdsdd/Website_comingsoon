@@ -1328,12 +1328,32 @@ const FAQ = [
   ["How and when will I be paid?",
    "If selected, by bank transfer at the beginning of each month."]
 ];
+/* Les trois questions de rémunération passent en tête, dans cet ordre et pour
+   les trois bras. Le montant garanti ne figure plus dans les annonces : le
+   candidat arrive sans le connaître, il doit le trouver tout de suite.
+   Repérage par préfixe : certaines questions contiennent des guillemets
+   échappés, une égalité stricte y serait fragile. */
+const FAQ_FIRST = [
+  "How is my variable compensation",
+  "How does the minimum guarantee",
+  "How and when will I be paid"
+];
+function faqOrdered(){
+  const head = [];
+  FAQ_FIRST.forEach(p => {
+    const row = FAQ.find(r => r[0].indexOf(p) === 0);
+    if(row) head.push(row);
+  });
+  return head.concat(FAQ.filter(r => !head.includes(r)));
+}
+
 function renderFaq(){
   const w = $("faqList");
   w.innerHTML = "";        // rejouable : applyFaqText la réécrit pour les bras single
-  FAQ.forEach(([q,a])=>{
+  faqOrdered().forEach(([q,a])=>{
     const d = document.createElement("details");
     d.className = "faq";
+    d.open = true;         // tout déplié : le candidat ne clique pas pour lire
     d.innerHTML = `<summary>${q}</summary><div>${a}</div>`;
     w.appendChild(d);
   });
