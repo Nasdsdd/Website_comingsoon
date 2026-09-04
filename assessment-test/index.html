@@ -19,12 +19,27 @@
       (document.body || document.documentElement).appendChild(d);
     }catch(e){ alert("SIGMA — erreur au chargement\n\n" + msg); }
   }
+  /* Les extensions du navigateur (MetaMask, portefeuilles crypto, bloqueurs)
+     injectent leurs propres scripts et produisent regulierement des erreurs qui
+     n'ont rien a voir avec la plateforme. Sans ce filtre, le filet affiche son
+     ecran par-dessus tout et empeche le candidat de passer le test. */
+  function isExternal(txt){
+    return /(-|^)extension:\/\/|moz-extension|safari-web-extension|chrome-extension/i.test(String(txt||""));
+  }
   window.addEventListener("error", function(e){
+    if(isExternal(e.filename) || isExternal(e.error && e.error.stack)) return;
     paint((e.error && e.error.stack) ? e.error.stack
           : (e.message + "  [" + (e.filename||"?") + ":" + (e.lineno||"?") + "]"));
   });
   window.addEventListener("unhandledrejection", function(e){
-    paint("Promesse rejetée : " + (e.reason && e.reason.stack || e.reason));
+    var r = e.reason;
+    if(isExternal(r && r.stack) || isExternal(r && r.message) || isExternal(r)) return;
+    /* Une promesse rejetee n'empeche pas forcement la page de fonctionner :
+       on n'affiche que si aucun ecran n'est visible une seconde plus tard. */
+    setTimeout(function(){
+      if(!document.querySelectorAll(".stage:not(.hidden)").length)
+        paint("Promesse rejetée : " + (r && r.stack || r));
+    }, 1000);
   });
   /* si rien n'est visible 4 s apres le chargement, on le signale aussi */
   window.addEventListener("load", function(){
