@@ -63,6 +63,10 @@ tailwind.config = {
 
 <a href="#main" class="sr-only focus:not-sr-only focus:fixed focus:z-50 focus:top-4 focus:left-4 focus:bg-blue focus:px-4 focus:py-2 focus:text-sm focus:font-medium focus:text-fg">Skip to content</a>
 
+
+
+
+
 <!-- ══ NAV ══ -->
 <header class="sticky top-0 z-40 border-b border-line bg-void/85 backdrop-blur-md">
   <nav class="mx-auto flex h-16 max-w-site items-center justify-between px-4 sm:px-6 lg:px-8" aria-label="Main">
@@ -78,7 +82,7 @@ tailwind.config = {
     </div>
     <div class="flex items-center gap-3">
       <a href="login.html" class="hidden cursor-pointer rounded-ctl border border-strong px-4 py-2 text-[13.5px] font-medium transition-colors duration-200 hover:border-blue hover:bg-blue/10 sm:inline-block">Operator login</a>
-      <a href="#careers" class="cursor-pointer rounded-ctl bg-blue px-4 py-2 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">View openings</a>
+      <a id="navCta" href="#careers" class="cursor-pointer rounded-ctl bg-blue px-4 py-2 text-[13.5px] font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">View openings</a>
     </div>
   </nav>
 </header>
@@ -326,8 +330,8 @@ tailwind.config = {
             Run live sessions on Nasdaq futures from the Terminal. Execute authorized signals,
             manage them to invalidation, and file the session debrief.
           </p>
-          <a href="mailto:support@sigmadynamix.com?subject=Futures%20Operator%20application" class="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-ctl bg-blue px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">
-            Apply
+          <a href="/assessment/" class="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-ctl bg-blue px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">
+            Take the assessment
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
         </div>
@@ -437,6 +441,86 @@ tailwind.config = {
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.1 });
   items.forEach(function (el) { io.observe(el); });
 })();
+</script>
+
+
+<!-- ══ FENÊTRE DE RECRUTEMENT ══════════════════════════════════════════
+     Affichée à l'ouverture pendant une campagne. Refermable, et le refus
+     est mémorisé pour la session : le visiteur ne la revoit pas à chaque
+     page. Placée en fin de body pour ne pas retarder l'affichage.      -->
+<div id="hiringModal" class="fixed inset-0 z-[100] hidden items-center justify-center px-4"
+     role="dialog" aria-modal="true" aria-labelledby="hiringTitle">
+  <div id="hiringBackdrop" class="absolute inset-0 bg-void/80 backdrop-blur-sm"></div>
+  <div class="relative w-full max-w-md overflow-hidden rounded-card border border-line bg-panel shadow-2xl">
+    <button id="hiringClose" aria-label="Close"
+            class="absolute right-3 top-3 cursor-pointer rounded-ctl p-2 text-muted transition-colors duration-200 hover:bg-white/5 hover:text-fg">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+    <div class="p-8">
+      <p class="font-mono text-[11px] uppercase tracking-[0.22em] text-link">Now hiring</p>
+      <h2 id="hiringTitle" class="disp tight mt-4 text-2xl font-semibold">Futures Operator</h2>
+      <p class="mt-4 text-[15px] leading-relaxed text-muted">
+        We hire on execution, not on paper. Selection is a live market simulation —
+        no CV, no interview. It takes about 30 minutes and runs on desktop.
+      </p>
+      <div class="mt-7 flex flex-wrap items-center gap-3">
+        <a href="/assessment/"
+           class="inline-flex cursor-pointer items-center gap-2 rounded-ctl bg-blue px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">
+          Take the assessment
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </a>
+        <button id="hiringLater"
+                class="cursor-pointer rounded-ctl border border-strong px-5 py-3 text-sm font-medium text-muted transition-colors duration-200 hover:border-blue hover:text-fg">
+          Maybe later
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ PÉRIODE DE RECRUTEMENT ═══════════════════════════════════════════
+   Mettre à true pendant une campagne, false le reste du temps.
+   true  → fenêtre affichée à l'ouverture, bouton de nav vers l'assessment
+   false → site strictement inchangé
+   Le bouton de la section Careers reste actif dans les deux cas.     */
+const HIRING_OPEN = true;
+const HIRING_DELAY_MS = 1200;      // laisse la page s'afficher avant d'ouvrir
+
+document.addEventListener("DOMContentLoaded", function(){
+  if(!HIRING_OPEN) return;
+
+  var cta = document.getElementById("navCta");
+  if(cta){ cta.href = "/assessment/"; cta.textContent = "Take the assessment"; }
+
+  /* Aucune mémorisation : la fenêtre se réaffiche à chaque chargement de
+     page, y compris après une simple actualisation. Choix assumé pendant
+     une campagne de recrutement. */
+
+  var modal = document.getElementById("hiringModal");
+  if(!modal) return;
+
+  function open(){
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    document.body.style.overflow = "hidden";
+  }
+  function close(){
+    modal.classList.add("hidden");
+    modal.classList.remove("flex");
+    document.body.style.overflow = "";
+  }
+
+  setTimeout(open, HIRING_DELAY_MS);
+  document.getElementById("hiringClose").addEventListener("click", close);
+  document.getElementById("hiringLater").addEventListener("click", close);
+  document.getElementById("hiringBackdrop").addEventListener("click", close);
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && !modal.classList.contains("hidden")) close();
+  });
+});
 </script>
 
 </body>
