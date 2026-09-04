@@ -307,6 +307,16 @@
 </header>
 
 
+<noscript>
+  <div class="stage" style="display:block">
+    <div class="card">
+      <h2>JavaScript is required</h2>
+      <p class="lead">This assessment runs a live market simulation in your browser.
+      Please enable JavaScript, or open this page in a different browser.</p>
+    </div>
+  </div>
+</noscript>
+
 <!-- ===== PRÉREQUIS ORDINATEUR ===== -->
 <div class="stage hidden" id="stageDesktop">
   <div class="card">
@@ -327,7 +337,7 @@
 </div>
 
 <!-- ===== STAGE 0 : DAY PACKS (admin/prep — invisible in production) ===== -->
-<div class="stage" id="stage0">
+<div class="stage hidden" id="stage0">
   <div class="card">
     <h2>Preparation — Day packs</h2>
     <p class="lead">Load one or more <b>daypack_YYYYMMDD.json</b> files (built with build_daypack.py). Each test session replays the market from a fixed Paris start time. In production this step is server-side and invisible to candidates.</p>
