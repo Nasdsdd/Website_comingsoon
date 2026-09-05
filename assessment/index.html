@@ -1386,6 +1386,17 @@ let chartT, seriesT, chartM, seriesM;
 const S = {};          // état du replay courant
 let MODE = "test";     // "demo" | "test"
 
+/* Applique les dimensions courantes, en ignorant les valeurs nulles d'un
+   conteneur masqué. Rappelée explicitement à chaque réaffichage du simulateur. */
+function resizeCharts(){
+  if(!chartT || !chartM) return;
+  const t = $("chartTick"), m = $("chartMin");
+  if(t.clientWidth > 0 && t.clientHeight > 0)
+    chartT.applyOptions({ width:t.clientWidth, height:t.clientHeight });
+  if(m.clientWidth > 0 && m.clientHeight > 0)
+    chartM.applyOptions({ width:m.clientWidth, height:m.clientHeight });
+}
+
 function initCharts(){
   if(chartT) return;
   const opts = {
@@ -1403,10 +1414,11 @@ function initCharts(){
   seriesT = chartT.addCandlestickSeries(cs);
   chartM = LightweightCharts.createChart($("chartMin"), opts);
   seriesM = chartM.addCandlestickSeries(cs);
-  const ro = new ResizeObserver(()=>{
-    chartT.applyOptions({width:$("chartTick").clientWidth, height:$("chartTick").clientHeight});
-    chartM.applyOptions({width:$("chartMin").clientWidth, height:$("chartMin").clientHeight});
-  });
+  /* Entre deux sessions le simulateur est masqué : clientWidth et clientHeight
+     retombent à 0 et l'observateur appliquait ces dimensions aux graphiques.
+     Selon le navigateur il ne se redéclenche pas toujours au réaffichage, et
+     les graphiques restaient alors invisibles à partir de la session 2. */
+  const ro = new ResizeObserver(()=>resizeCharts());
   ro.observe($("chartTick")); ro.observe($("chartMin"));
 }
 
@@ -1902,6 +1914,9 @@ function startDemo(withTour){
   setupReplay(pack, 2, nyToUtcMs(d.day, single ? sd.startNY : d.startNY),
               single ? "single" : "paired", single ? sd.side : null);
   applyModeUI();
+  resizeCharts();
+  requestAnimationFrame(resizeCharts);
+  setTimeout(resizeCharts, 120);
   S.cycle = null; S.cycleStartAt = 0;   // détection organique coupée : démo scriptée
   if(single) buildDemoScriptSingle(sd); else buildDemoScript(d);
   /* 1) tutoriel guidé sur l'écran figé, 2) puis lancement des trades démo */
@@ -2212,6 +2227,11 @@ function startTestSession(){
   const startMs = sig0 ? sig0.t - CONFIG.leadInSec*1000 : pack.ticks[0][0];
   setupReplay(pack, CONFIG.signalsPerSession, startMs, plan.mode, plan.side);
   applyModeUI();
+  /* le conteneur vient de réapparaître : on force les dimensions, puis une
+     seconde fois après le calcul de mise en page du navigateur. */
+  resizeCharts();
+  requestAnimationFrame(resizeCharts);
+  setTimeout(resizeCharts, 120);
   /* on saute le temps mort : la session démarre 3 s avant la première autorisation */
   const firstMs = predictNextSignalMs();
   if(firstMs !== null && firstMs - 3000 > S.marketMs) fastForwardTo(firstMs - 3000);
