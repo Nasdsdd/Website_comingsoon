@@ -1211,8 +1211,10 @@ $("btnSubmitForm").addEventListener("click", async ()=>{
   btn.disabled = true; btn.textContent = "Checking…";
   let used = null;
   try{
+    const selfToken = (new URLSearchParams(location.search).get("t")
+                    || new URLSearchParams(location.search).get("token") || "").trim();
     const { status, data } = await callBackend(
-      "start-attempt", { check: true, email: candidate.email }, 10000);
+      "start-attempt", { check: true, email: candidate.email, token: selfToken }, 10000);
     if(status === 200 && data.ok) used = data.used ? (data.reason || "already_started") : false;
   }catch(e){ /* injoignable : on laisse passer */ }
   btn.disabled = false; btn.textContent = label;
