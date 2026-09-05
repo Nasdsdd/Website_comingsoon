@@ -829,6 +829,8 @@ const fmtClock = ms => {
   return (CONFIG.hideHours ? "HH" + s.slice(2) : s) + " NY";
 };
 /* format des axes : les temps des barres sont déjà décalés en heure NY */
+const VIRTUAL_DAY_MS = 20000 * 86400000;   // journée de référence du premier rejeu
+let replaySeq = 0;                          // une journée virtuelle par rejeu, jamais de recul
 function fmtAxis(sec){
   const d = new Date(sec*1000), p = n=>String(n).padStart(2,"0");
   const hh = CONFIG.hideHours ? "HH" : p(d.getUTCHours());
@@ -1461,6 +1463,40 @@ let MODE = "test";     // "demo" | "test"
 
 /* Applique les dimensions courantes, en ignorant les valeurs nulles d'un
    conteneur masqué. Rappelée explicitement à chaque réaffichage du simulateur. */
+/* Filet de dernier recours. Quelle que soit la cause d'un graphe vide en début
+   de session — conteneur à zéro pixel, série non peinte, état résiduel de la
+   session précédente — on redimensionne et on réinjecte les données. Coût
+   négligeable, exécuté trois fois sur les deux premières secondes.
+   Journalise aussi l'état pour que la console soit exploitable en cas de
+   nouveau signalement. */
+function verifyCharts(tag){
+  try{
+    if(!chartT || !chartM || !S.pack) return;
+    const t = $("chartTick"), m = $("chartMin");
+    const bad = t.clientWidth === 0 || t.clientHeight === 0
+             || m.clientWidth === 0 || m.clientHeight === 0
+             || !S.barsT.length || !S.barsM.length;
+    console.log("[charts]", tag,
+      "tick", t.clientWidth + "x" + t.clientHeight, S.barsT.length + " bars",
+      "| min", m.clientWidth + "x" + m.clientHeight, S.barsM.length + " bars",
+      bad ? "→ RECONSTRUCTION" : "ok");
+    if(!bad) return;
+    resizeCharts();
+    if(S.barsT.length) seriesT.setData(S.barsT);
+    if(S.barsM.length) seriesM.setData(S.barsM);
+    const nowSec = Math.floor((S.marketMs + S.nyOff + (S.dayShift || 0))/1000);
+    const fromIdx = (bars, minutes) => {
+      const cut = nowSec - minutes*60;
+      const i = bars.findIndex(b => b.time >= cut);
+      return i < 0 ? 0 : i;
+    };
+    if(S.barsT.length) chartT.timeScale().setVisibleLogicalRange(
+      { from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length + 8 });
+    if(S.barsM.length) chartM.timeScale().setVisibleLogicalRange(
+      { from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length + 6 });
+  }catch(e){ console.warn("[charts] verify failed", e); }
+}
+
 function resizeCharts(){
   if(!chartT || !chartM) return;
   const t = $("chartTick"), m = $("chartMin");
@@ -1513,6 +1549,21 @@ function setupReplay(pack, maxSignals, startMs, mode, side){
   seriesT.setData([]); seriesM.setData([]);
   $("logTable").innerHTML = "";
   S.nyOff = tzOffsetMs(startMs, "America/New_York");   // les barres sont horodatées en heure NY
+  /* Toutes les sessions sont ramenées sur une même journée virtuelle.
+     Deux raisons. D'abord la rotation fait parfois reculer la session suivante
+     de plusieurs semaines (cellules 7 à 9 en session 2, 4 à 6 en session 3) :
+     la librairie de graphiques conserve son échelle de temps entre les sessions
+     et affichait alors une zone vide. Ensuite, les horodatages des barres
+     encodaient la date réelle de la séance, récupérable en inspectant le
+     graphique — ce que le masquage des dates interdit.
+     fmtAxis n'affiche que l'heure, le décalage d'un nombre entier de jours est
+     donc invisible pour le candidat.
+     Chaque rejeu est en outre décalé d'une journée virtuelle supplémentaire :
+     l'horloge du graphique n'avance ainsi jamais à rebours, même entre deux
+     sessions de la même journée réelle. */
+  const firstNy = pack.ticks[0][0] + S.nyOff;
+  S.dayShift = VIRTUAL_DAY_MS + (replaySeq++) * 86400000
+             - Math.floor(firstNy / 86400000) * 86400000;
   fastForwardTo(Math.max(startMs, pack.ticks[0][0]));
   /* v8.0 : les signaux ne sont plus détectés à l'exécution, ils sont lus
      dans SIGNAL_TABLE. Garantit des signaux strictement identiques
@@ -1532,7 +1583,7 @@ function fastForwardTo(targetMs){
      fixe ne représente pas la même durée d'une journée à l'autre. */
   seriesT.setData(S.barsT);
   seriesM.setData(S.barsM);
-  const nowSec = Math.floor((targetMs + S.nyOff)/1000);
+  const nowSec = Math.floor((targetMs + S.nyOff + (S.dayShift || 0))/1000);
   const fromIdx = (bars, minutes) => {
     const cut = nowSec - minutes*60;
     let i = bars.findIndex(b => b.time >= cut);
@@ -1579,7 +1630,7 @@ function advance(dtMs){
 
 function applyTick(ms, price, bulk){
   S.price = price;
-  const nyMs = ms + S.nyOff;                 // heure de New York pour l'affichage
+  const nyMs = ms + S.nyOff + (S.dayShift || 0);   // heure NY, ramenée sur la journée virtuelle
   const tSec = Math.floor(nyMs/1000);
   if(S.tickInBar === 0){
     S.barsT.push({time:tSec, open:price, high:price, low:price, close:price});
@@ -2304,7 +2355,9 @@ function startTestSession(){
      seconde fois après le calcul de mise en page du navigateur. */
   resizeCharts();
   requestAnimationFrame(resizeCharts);
-  setTimeout(resizeCharts, 120);
+  setTimeout(()=>verifyCharts("session " + (EV.sessionIdx+1) + " +120ms"), 120);
+  setTimeout(()=>verifyCharts("session " + (EV.sessionIdx+1) + " +600ms"), 600);
+  setTimeout(()=>verifyCharts("session " + (EV.sessionIdx+1) + " +2s"), 2000);
   /* on saute le temps mort : la session démarre 3 s avant la première autorisation */
   const firstMs = predictNextSignalMs();
   if(firstMs !== null && firstMs - 3000 > S.marketMs) fastForwardTo(firstMs - 3000);
