@@ -333,6 +333,24 @@
 </noscript>
 
 <!-- ===== PRÉREQUIS ORDINATEUR ===== -->
+<div class="stage hidden" id="stageClosed">
+  <div class="card">
+    <h2>Applications are closed</h2>
+    <p class="lead">
+      We are not recruiting operators at the moment. This assessment is only open
+      during an active hiring window.<br><br>
+      If you were invited by email, please use the personal link we sent you —
+      it remains valid.<br><br>
+      Otherwise, you are welcome to write to us and we will let you know when the
+      next window opens:<br>
+      <b style="font-family:var(--mono)">support@sigmadynamix.com</b>
+    </p>
+    <p style="font-size:13px;color:var(--muted);margin-top:18px">
+      Nothing has been recorded — no application has been started.
+    </p>
+  </div>
+</div>
+
 <div class="stage hidden" id="stageDesktop">
   <div class="card">
     <h2>A computer is required</h2>
@@ -867,6 +885,24 @@ function decodePack(p){
   return { id:p.id, day:p.day, symbol:p.symbol, tickSize:p.tickSize, ticks };
 }
 window.addEventListener("DOMContentLoaded", async ()=>{
+  /* ══ FENÊTRE DE RECRUTEMENT ═══════════════════════════════════════════
+     false → les visiteurs sans invitation voient l'écran « fermé ».
+     Les liens nominatifs (?t=…) continuent de fonctionner : une invitation
+     déjà envoyée ne doit jamais être invalidée par la fermeture du site.
+     Mettre HIRING_LOCK_ALL à true pour bloquer aussi les liens nominatifs. */
+  const HIRING_OPEN     = false;
+  const HIRING_LOCK_ALL = false;
+
+  if(!HIRING_OPEN){
+    const q = new URLSearchParams(location.search);
+    const hasInvite = !!(q.get("t") || q.get("token") || "").trim();
+    if(HIRING_LOCK_ALL || !hasInvite){
+      $("stage0").classList.add("hidden");
+      $("stageClosed").classList.remove("hidden");
+      return;
+    }
+  }
+
   /* outil de développement : jamais visible par un candidat */
   if(CONFIG.env !== "PRODUCTION") $("btnReset").classList.remove("hidden");
   EMBEDDED_PACKS.forEach(p=>packs.push(decodePack(p)));
