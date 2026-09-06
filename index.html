@@ -322,7 +322,7 @@ tailwind.config = {
       <div class="grid gap-10 p-8 lg:grid-cols-[1.15fr_1fr] lg:gap-16 lg:p-12">
         <div>
           <div class="flex flex-wrap items-center gap-3">
-            <span class="rounded-full border border-green/30 bg-green/[0.08] px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-green">Open</span>
+            <span id="careersBadge" class="rounded-full border border-green/30 bg-green/[0.08] px-3 py-1 font-mono text-[10.5px] uppercase tracking-[0.14em] text-green">Open</span>
             <span class="num text-xs text-muted">Remote · US session hours</span>
           </div>
           <h3 class="disp tight mt-5 text-2xl font-semibold sm:text-3xl">Futures Operator</h3>
@@ -330,8 +330,8 @@ tailwind.config = {
             Run live sessions on Nasdaq futures from the Terminal. Execute authorized signals,
             manage them to invalidation, and file the session debrief.
           </p>
-          <a href="/assessment/" class="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-ctl bg-blue px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">
-            Take the assessment
+          <a id="careersCta" href="/assessment/" class="mt-8 inline-flex cursor-pointer items-center gap-2 rounded-ctl bg-blue px-5 py-3 text-sm font-semibold text-white transition-colors duration-200 hover:bg-[#1A72FF]">
+            <span id="careersCtaLabel">Take the assessment</span>
             <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
           </a>
         </div>
@@ -511,10 +511,34 @@ tailwind.config = {
 /* ══ PÉRIODE DE RECRUTEMENT ═══════════════════════════════════════════
    Mettre à true pendant une campagne, false le reste du temps.
    true  → fenêtre affichée à l'ouverture, bouton de nav vers l'assessment
-   false → site strictement inchangé
-   Le bouton de la section Careers reste actif dans les deux cas.     */
+   false → pas de fenêtre, badge « Closed », bouton Careers en mailto
+   Une seule ligne à changer pour ouvrir ou fermer la campagne.       */
 const HIRING_OPEN = false;
 const HIRING_DELAY_MS = 1200;      // laisse la page s'afficher avant d'ouvrir
+const HIRING_CONTACT = "support@sigmadynamix.com";
+
+/* ── Recrutement fermé : la carte Careers reste visible mais renvoie
+      vers le support au lieu de la plateforme d'évaluation. ───────── */
+document.addEventListener("DOMContentLoaded", function(){
+  if(HIRING_OPEN) return;
+
+  var badge = document.getElementById("careersBadge");
+  if(badge){
+    badge.textContent = "Closed";
+    badge.className = "rounded-full border border-strong bg-white/[0.04] px-3 py-1 "
+                    + "font-mono text-[10.5px] uppercase tracking-[0.14em] text-muted";
+  }
+
+  var cta = document.getElementById("careersCta");
+  if(cta){
+    cta.href = "mailto:" + HIRING_CONTACT
+             + "?subject=" + encodeURIComponent("Futures Operator — application");
+    cta.removeAttribute("target");
+    cta.removeAttribute("rel");
+    var label = document.getElementById("careersCtaLabel");
+    if(label) label.textContent = "Contact us";
+  }
+});
 
 document.addEventListener("DOMContentLoaded", function(){
   if(!HIRING_OPEN) return;
