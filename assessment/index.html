@@ -290,6 +290,24 @@
     color:var(--text);font-variant-numeric:tabular-nums}
   .gtier.hl{border-color:var(--accent)}
   .gtier.hl span{color:var(--link)}
+  /* Schema des etapes de recrutement — meme grammaire visuelle que .gtiers */
+  .steps{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+  .step{flex:1;min-width:150px;background:var(--void);border:1px solid var(--border);
+    border-radius:var(--r-ctl);padding:13px 12px;display:flex;flex-direction:column}
+  .step span{display:block;font-size:10px;letter-spacing:.12em;color:var(--link);
+    margin-bottom:7px;font-weight:600;line-height:1.2;font-family:var(--mono)}
+  .step b{display:block;line-height:1.25;font-size:14px;color:var(--text);margin-bottom:6px}
+  .step i{display:block;font-style:normal;line-height:1.45;font-size:12px;color:var(--muted)}
+  .step.hl{border-color:var(--accent)}
+  .step.hl span{color:var(--green)}
+  /* La regle generique "details.faq div" (specificite superieure) ecrasait le
+     padding des cartes des deux schemas : leur texte collait au bord superieur.
+     On la surpasse explicitement ici, et on neutralise l'espace parasite sur
+     les conteneurs flex eux-memes. */
+  details.faq .gtiers, details.faq .steps{padding:0}
+  details.faq .gtier, details.faq .step{padding:14px 13px 15px}
+  /* quatre etapes sur une ligne des que la place le permet, sinon deux par deux */
+  .step{flex:1 1 130px;min-width:130px}
   /* anneau "calculs en cours" autour de la lampe */
   #lampWrap{position:relative;width:68px;height:68px;margin:2px auto 10px}
   #lampWrap #signalLamp{margin:6px}
@@ -1384,7 +1402,13 @@ const FAQ = [
   ["How and when will I be paid?",
    "If selected, by bank transfer at the beginning of each month."],
   ["What happens if I am selected?",
-   "A two-week evaluation on the Terminal first, under live session conditions and with the same debrief requirements. It confirms that what you showed here holds day after day. This evaluation period is <b>not compensated</b> — compensation starts when you move to live sessions on desk capital."]
+   "A two-week evaluation on the Terminal first, under live session conditions and with the same debrief requirements. It confirms that what you showed here holds day after day. This evaluation period is <b>not compensated</b> — compensation starts when you move to live sessions on desk capital." +
+   "<div class='steps'>" +
+   "<div class='step'><span>STEP 01</span><b>Online assessment</b><i>The simulation you are about to take. About 30 minutes.</i></div>" +
+   "<div class='step'><span>STEP 02</span><b>Ranking &amp; selection</b><i>Scored on execution quality, spread and discipline.</i></div>" +
+   "<div class='step'><span>STEP 03</span><b>Two-week evaluation</b><i>Daily sessions on the Terminal, debrief every day.</i></div>" +
+   "<div class='step hl'><span>STEP 04</span><b>Live desk capital</b><i>Firm signals on firm capital. Compensation starts.</i></div>" +
+   "</div>"]
 ];
 /* Les trois questions de rémunération passent en tête, dans cet ordre et pour
    les trois bras. Le montant garanti ne figure plus dans les annonces : le
