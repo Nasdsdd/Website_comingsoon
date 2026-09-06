@@ -1036,7 +1036,8 @@ function applyFaqText(){
      "Always hunt the best price: a Buyer waits for a slight dip and enters lower; a Seller enters higher, on the peak of the same move. The gap between the two operators' entries is what the firm earns, so patience on your own entry is what makes the difference."],
     keep("How is my variable"),
     keep("How does the minimum"),
-    keep("How and when")
+    keep("How and when"),
+    keep("What happens if I am selected")
   ].filter(Boolean);
   FAQ.splice(0, FAQ.length, ...rebuilt);
   renderFaq();               // sans ceci, le DOM déjà peint garde la version paired
@@ -1345,7 +1346,9 @@ const FAQ = [
    "<div class='gtier hl'><span>MONTH 3 ONWARD</span><b>$2,000 / mo</b></div>" +
    "</div>"],
   ["How and when will I be paid?",
-   "If selected, by bank transfer at the beginning of each month."]
+   "If selected, by bank transfer at the beginning of each month."],
+  ["What happens if I am selected?",
+   "A two-week evaluation on the Terminal first, under live session conditions and with the same debrief requirements. It confirms that what you showed here holds day after day. This evaluation period is <b>not compensated</b> — compensation starts when you move to live sessions on desk capital."]
 ];
 /* Les trois questions de rémunération passent en tête, dans cet ordre et pour
    les trois bras. Le montant garanti ne figure plus dans les annonces : le
@@ -1355,7 +1358,8 @@ const FAQ = [
 const FAQ_FIRST = [
   "How is my variable compensation",
   "How does the minimum guarantee",
-  "How and when will I be paid"
+  "How and when will I be paid",
+  "What happens if I am selected"
 ];
 function faqOrdered(){
   const head = [];
