@@ -260,7 +260,7 @@
     border:1px solid var(--line);color:var(--text);font-size:13px;font-family:var(--mono);
     cursor:pointer;transition:border-color .15s,background .15s}
   .chip:hover{border-color:rgba(148,163,184,.45)}
-  .chip.on{border-color:var(--accent);background:rgba(56,189,248,.12);color:var(--accent)}
+  .chip.on{border-color:var(--accent-hi);background:var(--accent);color:#FFFFFF;font-weight:600}
 
   /* calendrier */
   #calWrap{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:14px}
@@ -627,8 +627,8 @@ $("sideChoice").addEventListener("click", e=>{
 
 function buildTimeSlots(){
   $("timeChoice").innerHTML =
-    CONFIG.startSlots.map(t=>`<button class="opt" data-t="${t}">${t}</button>`).join("") +
-    `<button class="opt" data-t="RANDOM">🎲 Random</button>`;
+    CONFIG.startSlots.map(t=>`<button class="chip" data-t="${t}">${t}</button>`).join("") +
+    `<button class="chip" data-t="RANDOM">🎲 Random</button>`;
 }
 $("timeChoice").addEventListener("click", e=>{
   const b = e.target.closest(".chip"); if(!b) return;
