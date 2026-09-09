@@ -334,7 +334,6 @@
     <div><span>Candidate</span><b id="hName" class="num">—</b></div>
     <div><span>Session</span><b class="num" id="hSession">—</b></div>
     <div><span>Signals</span><b class="num"><span id="hSig">0</span>/<span id="hSigT">10</span></b></div>
-    <div><span>Session PnL net (pts)</span><b class="num" id="hPnl">0.00</b></div>
     <div><span>Market time (NY)</span><b class="num" id="hClock">—</b></div>
   </div>
 </header>
@@ -1897,10 +1896,6 @@ function logSignal(b, s, spread){
 
 function updateSessionHeader(){
   $("hSig").textContent = S.sigIdx;
-  const all = S.records.concat(S.legRecords||[]);
-  const pnl = all.filter(r=>r.result==="trade").reduce((a,r)=>a+r.pnl,0);
-  $("hPnl").textContent = pnl.toFixed(2);
-  $("hPnl").style.color = pnl>=0 ? "var(--green)" : "var(--red)";
 }
 
 /* ================================================================
