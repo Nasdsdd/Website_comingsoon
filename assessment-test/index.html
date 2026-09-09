@@ -590,12 +590,7 @@
 <div class="stage hidden" id="stageSessEnd">
   <div class="card">
     <h2 id="seTitle">Session complete</h2>
-    <div class="grid2">
-      <div class="stat"><span>Session net PnL (pts)</span><b class="num" id="sePnl">—</b></div>
-      <div class="stat"><span>Win rate</span><b class="num" id="seWin">—</b></div>
-      <div class="stat" id="seSpreadBox"><span>Avg. spread (sell − buy)</span><b class="num" id="seSpread">—</b></div>
-      <div class="stat"><span>Missed legs</span><b class="num" id="seMiss">—</b></div>
-    </div>
+    <p class="lead">Your session has been recorded.</p>
     <button class="btn" id="btnNextSession">Continue</button>
   </div>
 </div>
@@ -605,15 +600,6 @@
   <div class="card">
     <h2>Assessment complete — 3 sessions</h2>
     <p class="lead" id="resName"></p>
-    <table class="sess" id="sessTable">
-      <tr id="sessHead"><th>Session</th><th>PnL (pts)</th><th class="colSpread">Avg spread</th><th>Win rate</th><th>Missed</th></tr>
-    </table>
-    <div class="grid2">
-      <div class="stat"><span>Total net PnL (pts)</span><b class="num" id="rPnl">—</b></div>
-      <div class="stat"><span>Overall win rate</span><b class="num" id="rWin">—</b></div>
-      <div class="stat" id="rSpreadBox"><span>Avg. spread (sell − buy)</span><b class="num" id="rSpread">—</b></div>
-      <div class="stat"><span>Missed legs</span><b class="num" id="rMiss">—</b></div>
-    </div>
     <div class="verdict" id="rVerdict"></div>
     <div id="sendStatus" style="margin-top:14px;font-size:14px;color:var(--muted)">Sending your results…</div>
     <div class="warnbox hidden" id="manualSend" style="margin-top:12px">
@@ -2493,16 +2479,6 @@ function endSession(){
   $("sim").classList.add("hidden");
   $("hstat").classList.add("hidden");
   $("seTitle").textContent = `Session ${EV.sessionIdx+1}/3 complete`;
-  $("sePnl").textContent = st.pnl.toFixed(2);
-  $("sePnl").style.color = st.pnl>=0 ? "var(--green)" : "var(--red)";
-  $("seWin").textContent = (st.winRate*100).toFixed(0)+" %";
-  $("seMiss").textContent = st.missed;
-  if(st.avgSpread===null){
-    /* rien à afficher : le bloc est masqué par applyModeUI */
-  } else {
-    $("seSpread").textContent = (st.avgSpread>=0?"+":"")+st.avgSpread.toFixed(2);
-    $("seSpread").style.color = st.avgSpread>0 ? "var(--green)" : "var(--red)";
-  }
   EV.sessionIdx++;
   $("btnNextSession").textContent = EV.sessionIdx < EV.plan.length ? "Next session" : "See results";
   $("stageSessEnd").classList.remove("hidden");
@@ -2523,32 +2499,18 @@ function showFinal(){
     `${candidate.first} ${candidate.last} — ${candidate.email} (screening: ${candidate.score} pts)`;
   let allT=[], missed=0;
   EV.results.forEach((r,i)=>{
-    const row = $("sessTable").insertRow(-1);
-    row.innerHTML = `<td>${i+1}</td>
-      <td class="num" style="color:${r.pnl>=0?"var(--green)":"var(--red)"}">${r.pnl>=0?"+":""}${r.pnl.toFixed(2)}</td>
-      ${r.avgSpread===null ? "" : `<td class="num colSpread" style="color:${r.avgSpread>0?"var(--green)":"var(--red)"}">${r.avgSpread>=0?"+":""}${r.avgSpread.toFixed(2)}</td>`}
-      <td class="num">${(r.winRate*100).toFixed(0)} %</td><td class="num">${r.missed}</td>`;
     allT = allT.concat(r.records.filter(x=>x.result==="trade"));
     missed += r.missed;
   });
   const pnl = allT.reduce((a,r)=>a+r.pnl,0);
   const winRate = allT.length ? allT.filter(r=>r.pnl>0).length/allT.length : 0;
   const avgReact = allT.length ? allT.reduce((a,r)=>a+r.reaction,0)/allT.length : 0;
-  $("rPnl").textContent = pnl.toFixed(2);
-  $("rPnl").style.color = pnl>=0 ? "var(--green)" : "var(--red)";
-  $("rWin").textContent = (winRate*100).toFixed(0)+" %";
-  $("rMiss").textContent = missed;
   const allSpreads = EV.results.flatMap(r=>{
     const seen = new Set(), out = [];
     r.records.forEach(x=>{ if(x.spread!==undefined && !seen.has(x.signalIdx)){ seen.add(x.signalIdx); out.push(x.spread); } });
     return out;
   });
   const avgSpread = allSpreads.length ? allSpreads.reduce((a,v)=>a+v,0)/allSpreads.length : 0;
-  if(!allSpreads.length){ /* bloc masqué par applyModeUI */ }
-  else {
-    $("rSpread").textContent = (avgSpread>=0?"+":"")+avgSpread.toFixed(2);
-    $("rSpread").style.color = avgSpread>0 ? "var(--green)" : "var(--red)";
-  }
   const c = CONFIG.passCriteria;
   const pass = pnl > c.minPnlPts && winRate >= c.minWinRate && avgSpread > c.minAvgSpread &&
                missed <= c.maxMissed && avgReact <= c.maxAvgReactionSec;
