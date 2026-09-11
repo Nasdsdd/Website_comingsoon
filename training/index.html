@@ -228,7 +228,10 @@
   .gtier.hl span{color:var(--link)}
   /* anneau "calculs en cours" autour de la lampe */
   #lampWrap{position:relative;width:68px;height:68px;margin:2px auto 10px}
-  #lampWrap #signalLamp{margin:6px}
+  /* La marge de la lampe s'effondrait hors du conteneur (ni bordure ni padding
+     sur #lampWrap), si bien que la lampe remontait de 6 px alors que l'anneau
+     restait centre. Positionnement absolu : les deux sont concentriques. */
+  #lampWrap #signalLamp{position:absolute;inset:6px;width:auto;height:auto;margin:0}
   #lampWrap.calc::before{content:"";position:absolute;inset:0;border-radius:50%;
     border:3px solid transparent;border-top-color:var(--accent);border-right-color:var(--accent);
     animation:spin 1.1s linear infinite}
@@ -438,7 +441,7 @@ const CONFIG = {
   accessCode:      "SIGMA",        // code d'accès training
   packDir:         "daypacks/",    // dossier des daypack_YYYYMMDD.json en ligne
   auth:            { dTicks: 50 }, // D du cycle leader (50 ticks = 12,5 pts NQ)
-  signalWindowSec: 120,            // fenêtre d'entrée : 2 minutes
+  signalWindowSec: 180,            // fenêtre d'entrée : 3 minutes
   trailingTicks:   70,             // trailing SL de sortie (70 ticks = 17,5 pts)
   cooldownMs:      30000,          // pause de 30 s après chaque signal
   costs:           { spreadPts: 0.50, commissionPts: 0.25, spreadOnStop: false },
@@ -687,13 +690,33 @@ function beginSession(pack){
 /* ================================================================
    GRAPHIQUES
    ================================================================ */
+/* ---- Marge droite des graphiques ----
+   Elle ne peut pas se compter en bougies : la fenetre du graphique tick en
+   contient beaucoup plus que celle du 1-minute, et leur densite varie selon
+   l'activite du marche. Un nombre fixe donne donc une marge visuelle
+   differente sur chaque graphe et a chaque moment de la seance. On la calcule
+   en proportion de la largeur visible : les deux graphes gardent le meme vide
+   a droite, quelle que soit la densite des ticks.
+   Declarees en `function` (hoisted) : elles sont appelees plus haut dans le
+   fichier. */
+const CHART_PAD_RATIO = 0.18;          // 18 % de la largeur laisse libre a droite
+
+function rightPad(from, len){
+  return Math.max(4, Math.round((len - from) * CHART_PAD_RATIO));
+}
+function keepRightPad(chart){
+  const r = chart.timeScale().getVisibleLogicalRange();
+  if(!r) return;
+  chart.timeScale().scrollToPosition((r.to - r.from) * CHART_PAD_RATIO, false);
+}
+
 function initCharts(){
   if(chartT) return;
   const opts = {
     layout:{ background:{color:"#0E1729"}, textColor:"#93A2BD" },
     grid:{ vertLines:{color:"rgba(148,163,184,0.10)"}, horzLines:{color:"rgba(148,163,184,0.10)"} },
     timeScale:{ timeVisible:true, secondsVisible:true, borderColor:"rgba(148,163,184,0.16)",
-      rightOffset:8, tickMarkFormatter:t=>fmtAxis(t) },
+      rightOffset:16, tickMarkFormatter:t=>fmtAxis(t) },
     rightPriceScale:{ borderColor:"rgba(148,163,184,0.16)" },
     localization:{ timeFormatter:t=>fmtAxis(t) },
     crosshair:{ mode:0 }
@@ -744,8 +767,10 @@ function fastForwardTo(targetMs){
   const sliceT = S.barsT.slice(-400);
   seriesT.setData(sliceT);
   seriesM.setData(S.barsM);
-  chartT.timeScale().setVisibleLogicalRange({from: Math.max(0, sliceT.length-90), to: sliceT.length+8});
-  chartM.timeScale().setVisibleLogicalRange({from: Math.max(0, S.barsM.length-45), to: S.barsM.length+6});
+  const fT = Math.max(0, sliceT.length-90);
+  const fM = Math.max(0, S.barsM.length-45);
+  chartT.timeScale().setVisibleLogicalRange({from: fT, to: sliceT.length + rightPad(fT, sliceT.length)});
+  chartM.timeScale().setVisibleLogicalRange({from: fM, to: S.barsM.length + rightPad(fM, S.barsM.length)});
 }
 
 function runClock(){
@@ -777,7 +802,9 @@ function applyTick(ms, price, bulk){
   S.price = price;
   const nyMs = ms + S.nyOff;
   const tSec = Math.floor(nyMs/1000);
+  let newBarT = false, newBarM = false;
   if(S.tickInBar === 0){
+    newBarT = true;
     S.barsT.push({time:tSec, open:price, high:price, low:price, close:price});
     const n = S.barsT.length;
     if(n>1 && S.barsT[n-1].time <= S.barsT[n-2].time) S.barsT[n-1].time = S.barsT[n-2].time+1;
@@ -790,9 +817,17 @@ function applyTick(ms, price, bulk){
   if(!bm || bm.time !== mSec){
     bm = {time:mSec, open:price, high:price, low:price, close:price};
     S.barsM.push(bm);
+    newBarM = true;
   }
   bm.high=Math.max(bm.high,price); bm.low=Math.min(bm.low,price); bm.close=price;
   if(!bulk){ seriesT.update(bt); seriesM.update(bm); }
+  /* La derniere bougie est maintenue a distance du bord droit, sinon les
+     etiquettes d'entree et de stop se posent dessus. rightOffset ne vaut que
+     pour le defilement automatique : des qu'un cadrage explicite a ete pose,
+     l'ecart se referme bougie apres bougie. On le reaffirme donc ici, a chaque
+     nouvelle bougie seulement (scrollToPosition compte en bougies). */
+  if(!bulk && newBarT) keepRightPad(chartT);
+  if(!bulk && newBarM) keepRightPad(chartM);
   if(S.pos) checkStop(price);
 
   const open = ms < S.endMs;   // plus de nouveau signal après 11:00 NY
