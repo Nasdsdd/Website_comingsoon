@@ -1492,10 +1492,16 @@ function verifyCharts(tag){
       const i = bars.findIndex(b => b.time >= cut);
       return i < 0 ? 0 : i;
     };
-    if(S.barsT.length) chartT.timeScale().setVisibleLogicalRange(
-      { from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length + 25 });
-    if(S.barsM.length) chartM.timeScale().setVisibleLogicalRange(
-      { from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length + 17 });
+    if(S.barsT.length){
+      const f = fromIdx(S.barsT, CONFIG.historyTickMin || 10);
+      chartT.timeScale().setVisibleLogicalRange(
+        { from: f, to: S.barsT.length + rightPad(f, S.barsT.length) });
+    }
+    if(S.barsM.length){
+      const f = fromIdx(S.barsM, CONFIG.historyMin || 60);
+      chartM.timeScale().setVisibleLogicalRange(
+        { from: f, to: S.barsM.length + rightPad(f, S.barsM.length) });
+    }
   }catch(e){ console.warn("[charts] verify failed", e); }
 }
 
@@ -1514,7 +1520,7 @@ function initCharts(){
     layout:{ background:{color:"#0E1729"}, textColor:"#93A2BD" },
     grid:{ vertLines:{color:"rgba(148,163,184,0.10)"}, horzLines:{color:"rgba(148,163,184,0.10)"} },
     timeScale:{ timeVisible:true, secondsVisible:true, borderColor:"rgba(148,163,184,0.16)",
-      rightOffset:25, tickMarkFormatter:(t)=>fmtAxis(t) },
+      rightOffset:32, tickMarkFormatter:(t)=>fmtAxis(t) },
     rightPriceScale:{ borderColor:"rgba(148,163,184,0.16)" },
     localization:{ timeFormatter:(t)=>fmtAxis(t) },
     crosshair:{ mode:0 }
@@ -1591,10 +1597,12 @@ function fastForwardTo(targetMs){
     let i = bars.findIndex(b => b.time >= cut);
     return i < 0 ? 0 : i;                      // pack plus court que demandé
   };
+  const fT = fromIdx(S.barsT, CONFIG.historyTickMin || 10);
+  const fM = fromIdx(S.barsM, CONFIG.historyMin || 60);
   chartT.timeScale().setVisibleLogicalRange({
-    from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length+25});
+    from: fT, to: S.barsT.length + rightPad(fT, S.barsT.length)});
   chartM.timeScale().setVisibleLogicalRange({
-    from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length+17});
+    from: fM, to: S.barsM.length + rightPad(fM, S.barsM.length)});
 }
 
 const MAX_FRAME_MS = 250;   // au-dela, on considere que l'onglet etait en pause
@@ -1630,6 +1638,26 @@ function advance(dtMs){
   if(S.tickIdx >= T.length) MODE==="demo" ? endDemo() : endSession();
 }
 
+/* ---- Marge droite des graphiques ----
+   Elle ne peut pas se compter en bougies : la fenetre du graphique tick en
+   contient beaucoup plus que celle du 1-minute, et leur densite varie selon
+   l'activite du marche. Un nombre fixe donne donc une marge visuelle
+   differente sur chaque graphe et a chaque moment de la seance. On la calcule
+   en proportion de la largeur visible : les deux graphes gardent le meme vide
+   a droite, quelle que soit la densite des ticks.
+   Declarees en `function` (hoisted) : elles sont appelees plus haut dans le
+   fichier. */
+const CHART_PAD_RATIO = 0.25;          // un quart de la largeur laisse libre
+
+function rightPad(from, len){
+  return Math.max(4, Math.round((len - from) * CHART_PAD_RATIO));
+}
+function keepRightPad(chart){
+  const r = chart.timeScale().getVisibleLogicalRange();
+  if(!r) return;
+  chart.timeScale().scrollToPosition((r.to - r.from) * CHART_PAD_RATIO, false);
+}
+
 function applyTick(ms, price, bulk){
   S.price = price;
   const nyMs = ms + S.nyOff + (S.dayShift || 0);   // heure NY, ramenée sur la journée virtuelle
@@ -1658,8 +1686,8 @@ function applyTick(ms, price, bulk){
      pour le defilement automatique : des qu'un cadrage explicite a ete pose,
      l'ecart se referme bougie apres bougie. On le reaffirme donc ici, a chaque
      nouvelle bougie seulement (scrollToPosition compte en bougies). */
-  if(!bulk && newBarT) chartT.timeScale().scrollToPosition(25, false);
-  if(!bulk && newBarM) chartM.timeScale().scrollToPosition(17, false);
+  if(!bulk && newBarT) keepRightPad(chartT);
+  if(!bulk && newBarM) keepRightPad(chartM);
   if(S.posBuy || S.posSell) checkStop(price);
   /* v8.0 : déclenchement sur la table figée. Le signal part dès que l'horloge
      de marché atteint son tSignal ; signalPrice est celui de la table, pas le
