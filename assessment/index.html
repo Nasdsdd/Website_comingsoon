@@ -1493,9 +1493,9 @@ function verifyCharts(tag){
       return i < 0 ? 0 : i;
     };
     if(S.barsT.length) chartT.timeScale().setVisibleLogicalRange(
-      { from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length + 18 });
+      { from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length + 25 });
     if(S.barsM.length) chartM.timeScale().setVisibleLogicalRange(
-      { from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length + 12 });
+      { from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length + 17 });
   }catch(e){ console.warn("[charts] verify failed", e); }
 }
 
@@ -1514,7 +1514,7 @@ function initCharts(){
     layout:{ background:{color:"#0E1729"}, textColor:"#93A2BD" },
     grid:{ vertLines:{color:"rgba(148,163,184,0.10)"}, horzLines:{color:"rgba(148,163,184,0.10)"} },
     timeScale:{ timeVisible:true, secondsVisible:true, borderColor:"rgba(148,163,184,0.16)",
-      rightOffset:18, tickMarkFormatter:(t)=>fmtAxis(t) },
+      rightOffset:25, tickMarkFormatter:(t)=>fmtAxis(t) },
     rightPriceScale:{ borderColor:"rgba(148,163,184,0.16)" },
     localization:{ timeFormatter:(t)=>fmtAxis(t) },
     crosshair:{ mode:0 }
@@ -1592,9 +1592,9 @@ function fastForwardTo(targetMs){
     return i < 0 ? 0 : i;                      // pack plus court que demandé
   };
   chartT.timeScale().setVisibleLogicalRange({
-    from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length+18});
+    from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length+25});
   chartM.timeScale().setVisibleLogicalRange({
-    from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length+12});
+    from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length+17});
 }
 
 const MAX_FRAME_MS = 250;   // au-dela, on considere que l'onglet etait en pause
@@ -1634,8 +1634,10 @@ function applyTick(ms, price, bulk){
   S.price = price;
   const nyMs = ms + S.nyOff + (S.dayShift || 0);   // heure NY, ramenée sur la journée virtuelle
   const tSec = Math.floor(nyMs/1000);
+  let newBarT = false, newBarM = false;
   if(S.tickInBar === 0){
     S.barsT.push({time:tSec, open:price, high:price, low:price, close:price});
+    newBarT = true;
     const n = S.barsT.length;
     if(n>1 && S.barsT[n-1].time <= S.barsT[n-2].time) S.barsT[n-1].time = S.barsT[n-2].time+1;
   }
@@ -1647,9 +1649,17 @@ function applyTick(ms, price, bulk){
   if(!bm || bm.time !== mSec){
     bm = {time:mSec, open:price, high:price, low:price, close:price};
     S.barsM.push(bm);
+    newBarM = true;
   }
   bm.high=Math.max(bm.high,price); bm.low=Math.min(bm.low,price); bm.close=price;
   if(!bulk){ seriesT.update(bt); seriesM.update(bm); }
+  /* La derniere bougie est maintenue a distance du bord droit, sinon les
+     etiquettes d'entree et de stop se posent dessus. rightOffset ne vaut que
+     pour le defilement automatique : des qu'un cadrage explicite a ete pose,
+     l'ecart se referme bougie apres bougie. On le reaffirme donc ici, a chaque
+     nouvelle bougie seulement (scrollToPosition compte en bougies). */
+  if(!bulk && newBarT) chartT.timeScale().scrollToPosition(25, false);
+  if(!bulk && newBarM) chartM.timeScale().scrollToPosition(17, false);
   if(S.posBuy || S.posSell) checkStop(price);
   /* v8.0 : déclenchement sur la table figée. Le signal part dès que l'horloge
      de marché atteint son tSignal ; signalPrice est celui de la table, pas le
