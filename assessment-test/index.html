@@ -2320,7 +2320,27 @@ const TOUR = [
 ];
 let tourIdx = 0, tourOnFinish = null;
 
+/* Les deux bulles ci-dessus decrivent le mode apparie. Sur les bras a sens
+   unique (les seuls servis depuis la v8.1) elles sont reecrites ici, comme
+   applyFaqText / applyPresText le font pour leurs propres ecrans. */
+function applyTourText(){
+  if(isPairedArm()) return;
+  const tip = el => TOUR.find(t => t.el === el);
+  const order = tip("orderBox");
+  order.title = "Order panel";
+  order.text  = "Each signal gives you one position, in the direction assigned for "
+    + "that session — a single entry button, and the direction cannot be changed. "
+    + "It carries a trailing stop of 70 ticks and its own Close button. You are "
+    + "filled 2 ticks away when you enter and 2 ticks away when you close manually, "
+    + "plus 1 tick of commission per trade; a trailing stop is executed at its own "
+    + "price. Every number you see, including this log, is net of those costs.";
+  const log = tip("log");
+  log.text = "One line per signal: your net result on that signal, and how long you "
+    + "took to enter after the authorization.";
+}
+
 function startTour(onFinish){
+  applyTourText();
   tourOnFinish = onFinish || null;
   $("sim").classList.remove("hidden");
   $("hstat").classList.remove("hidden");
