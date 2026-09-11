@@ -1717,7 +1717,7 @@ function advance(dtMs){
    a droite, quelle que soit la densite des ticks.
    Declarees en `function` (hoisted) : elles sont appelees plus haut dans le
    fichier. */
-const CHART_PAD_RATIO = 0.25;          // un quart de la largeur laisse libre
+const CHART_PAD_RATIO = 0.15;          // 15 % de la largeur laisse libre a droite
 
 function rightPad(from, len){
   return Math.max(4, Math.round((len - from) * CHART_PAD_RATIO));
