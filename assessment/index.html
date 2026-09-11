@@ -222,10 +222,12 @@
   /* En-tete place DANS le tableau : les colonnes s'alignent d'elles-memes
      sur les donnees, ce qu'un div separe ne pouvait pas faire. */
   #log th{font-family:var(--mono);font-size:9px;font-weight:400;color:var(--muted);
-    letter-spacing:.02em;white-space:nowrap;padding:4px;text-align:right;
+    letter-spacing:.02em;white-space:nowrap;padding:4px;
     border-bottom:1px solid var(--border)}
-  #log th:first-child,#log td:first-child{text-align:left}
-  #log td{text-align:right}
+  /* Largeurs egales et contenu centre : autant d'espace a gauche, entre les
+     colonnes et a droite, en-tete et donnees partageant le meme axe. */
+  #log table{table-layout:fixed}
+  #log th,#log td{text-align:center}
   #log .w{color:var(--green)} #log .l{color:var(--red)} #log .m{color:var(--amber)}
 
   /* ---- Demo captions ---- */
@@ -770,7 +772,7 @@ const QUESTIONNAIRE = {
   ]
 };
 
-const BUILD = "v11";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
+const BUILD = "v12";   // incrémenté à chaque livraison — vérifie ce numéro après chaque upload
 document.addEventListener("DOMContentLoaded", ()=>{
   $("buildTag").textContent = "· " + BUILD + (CONFIG.env==="PRODUCTION" ? "" : " · TEST");
 });
