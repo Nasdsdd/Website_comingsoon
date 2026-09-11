@@ -798,6 +798,11 @@ function stubWrite(n){
   STUB_MEM = n;
   try{ localStorage.setItem(STUB_CELL_KEY, String(n)); }catch(e){}
 }
+/* v8.1 : le recrutement ne se fait plus qu'en sens unique. Le bras A (deux
+   jambes appariees) est desactive ici ; remettre true pour le reactiver. */
+const PAIRED_ENABLED = false;
+const noPaired = a => (!PAIRED_ENABLED && a === "A") ? (Math.random() < 0.5 ? "B" : "C") : a;
+
 const armOfCell = c => ["A","B","C"][(c - 1) % 3];
 const STUB_CELL = (()=>{
   const p = new URLSearchParams(location.search);
@@ -813,11 +818,6 @@ const STUB_CELL = (()=>{
   stubWrite(n);
   return n;
 })();
-
-/* v8.1 : le recrutement ne se fait plus qu'en sens unique. Le bras A (deux
-   jambes appariees) est desactive ici ; remettre true pour le reactiver. */
-const PAIRED_ENABLED = false;
-const noPaired = a => (!PAIRED_ENABLED && a === "A") ? (Math.random() < 0.5 ? "B" : "C") : a;
 
 const ARM_KEY = "sigma_arm";
 let RESOLVED_ARM = armOfCell(STUB_CELL);
