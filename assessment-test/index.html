@@ -643,7 +643,7 @@ const CONFIG = {
   historyMin: 60,              // minutes de bougies 1-min visibles avant le départ
   historyTickMin: 10,          // minutes de bougies tick visibles avant le départ
   leadInSec: 30,               // secondes de marché jouées avant le 1er signal
-  demoSpeed: 1.56,             // démo rejouée 56 % plus vite (v8.1 : +30 % sur les 1.2 d'origine)
+  demoSpeed: 1.38,             // démo rejouée 38 % plus vite (v8.1 : +15 % sur les 1.2 d'origine)
   trailingTicks: 70,           // trailing SL de sortie (70 ticks = 17,5 pts NQ)
   /* ---- COÛTS DE TRADING (tous les chiffres affichés en sont nets) ----
      spreadPts      : 0,50 pt = 2 ticks de décalage à l'ENTRÉE (achat +0,50 / vente −0,50)
@@ -2029,7 +2029,7 @@ function say(text){
   if(!voiceOn || !("speechSynthesis" in window)){ showCaption(text); return; }
   const u = new SpeechSynthesisUtterance(text);
   if(demoVoice) u.voice = demoVoice;
-  u.lang = "en-US"; u.rate = 1.26; u.pitch = 0.92;   // +30 % pour suivre le replay accelere
+  u.lang = "en-US"; u.rate = 1.12; u.pitch = 0.92;   // +15 % pour suivre le replay accelere
   u.onstart = ()=>showCaption(text);   // le sous-titre s'affiche quand la phrase démarre
   speechSynthesis.speak(u);            // file d'attente : ne coupe plus la phrase en cours
 }
