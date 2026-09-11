@@ -1563,9 +1563,9 @@ function verifyCharts(tag){
       return i < 0 ? 0 : i;
     };
     if(S.barsT.length) chartT.timeScale().setVisibleLogicalRange(
-      { from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length + 8 });
+      { from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length + 18 });
     if(S.barsM.length) chartM.timeScale().setVisibleLogicalRange(
-      { from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length + 6 });
+      { from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length + 12 });
   }catch(e){ console.warn("[charts] verify failed", e); }
 }
 
@@ -1584,7 +1584,7 @@ function initCharts(){
     layout:{ background:{color:"#0E1729"}, textColor:"#93A2BD" },
     grid:{ vertLines:{color:"rgba(148,163,184,0.10)"}, horzLines:{color:"rgba(148,163,184,0.10)"} },
     timeScale:{ timeVisible:true, secondsVisible:true, borderColor:"rgba(148,163,184,0.16)",
-      rightOffset:8, tickMarkFormatter:(t)=>fmtAxis(t) },
+      rightOffset:18, tickMarkFormatter:(t)=>fmtAxis(t) },
     rightPriceScale:{ borderColor:"rgba(148,163,184,0.16)" },
     localization:{ timeFormatter:(t)=>fmtAxis(t) },
     crosshair:{ mode:0 }
@@ -1662,9 +1662,9 @@ function fastForwardTo(targetMs){
     return i < 0 ? 0 : i;                      // pack plus court que demandé
   };
   chartT.timeScale().setVisibleLogicalRange({
-    from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length+8});
+    from: fromIdx(S.barsT, CONFIG.historyTickMin || 10), to: S.barsT.length+18});
   chartM.timeScale().setVisibleLogicalRange({
-    from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length+6});
+    from: fromIdx(S.barsM, CONFIG.historyMin || 60), to: S.barsM.length+12});
 }
 
 const MAX_FRAME_MS = 250;   // au-dela, on considere que l'onglet etait en pause
