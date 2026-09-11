@@ -443,6 +443,18 @@
   </div>
 </div>
 
+<!-- ===== ENGAGEMENT (entre la FAQ et la presentation) ===== -->
+<div class="stage hidden" id="stageCommit">
+  <div class="card">
+    <h2>One last thing</h2>
+    <p class="lead">If you are selected, the next step is a <b>two-week evaluation on live
+      daily trading</b>: one session every trading day, around <b>20 minutes</b> each.</p>
+    <p class="lead">We look at consistency across those sessions, not at a single good day.</p>
+    <p class="lead"><b>Are you available for that?</b></p>
+    <button class="btn" id="btnCommitYes">Yes, I am in</button>
+  </div>
+</div>
+
 <div class="stage hidden" id="stageKo">
   <div class="card">
     <h2>Thank you for applying</h2>
@@ -625,13 +637,13 @@ const CONFIG = {
      (start-attempt renvoie arm, cell et sessions[{packId, mode, side}]).
      Les journées ne sont plus nommées côté client : identifiants opaques. */
   sessions: null,
-  signalsPerSession: 15,       // 15 signaux par session (v8.0)
+  signalsPerSession: 10,       // 10 signaux par session (v8.1)
   signalWindowSec: 120,        // fenêtre d'entrée : 2 minutes
   estimatedMinutes: 30,        // durée annoncée au candidat (un seul endroit à changer)
   historyMin: 60,              // minutes de bougies 1-min visibles avant le départ
   historyTickMin: 10,          // minutes de bougies tick visibles avant le départ
   leadInSec: 30,               // secondes de marché jouées avant le 1er signal
-  demoSpeed: 1.2,              // démo rejouée 20 % plus vite que le temps réel
+  demoSpeed: 1.56,             // démo rejouée 56 % plus vite (v8.1 : +30 % sur les 1.2 d'origine)
   trailingTicks: 70,           // trailing SL de sortie (70 ticks = 17,5 pts NQ)
   /* ---- COÛTS DE TRADING (tous les chiffres affichés en sont nets) ----
      spreadPts      : 0,50 pt = 2 ticks de décalage à l'ENTRÉE (achat +0,50 / vente −0,50)
@@ -791,15 +803,21 @@ const STUB_CELL = (()=>{
   const p = new URLSearchParams(location.search);
   const forced = parseInt(p.get("cell") || "", 10);
   if(forced >= 1 && forced <= 9) return forced;      // fige, ne consomme rien
-  const want = (p.get("a") || "").toUpperCase();
+  const want = noPaired((p.get("a") || "").toUpperCase());
   let n = stubRead();
   for(let k = 0; k < 9; k++){
     n = (n % 9) + 1;
+    if(!PAIRED_ENABLED && armOfCell(n) === "A") continue;   // cellules 1, 4, 7 ecartees
     if(!["A","B","C"].includes(want) || armOfCell(n) === want) break;
   }
   stubWrite(n);
   return n;
 })();
+
+/* v8.1 : le recrutement ne se fait plus qu'en sens unique. Le bras A (deux
+   jambes appariees) est desactive ici ; remettre true pour le reactiver. */
+const PAIRED_ENABLED = false;
+const noPaired = a => (!PAIRED_ENABLED && a === "A") ? (Math.random() < 0.5 ? "B" : "C") : a;
 
 const ARM_KEY = "sigma_arm";
 let RESOLVED_ARM = armOfCell(STUB_CELL);
@@ -810,7 +828,7 @@ function readStoredArm(){
   try{
     const v = sessionStorage.getItem(ARM_KEY);
     return ["A","B","C"].includes(v) ? v : null;
-  }catch(e){ return null; }                              // stockage refusé
+  }catch(e){ return null; }                              // stockage refuse
 }
 
 async function resolveArm(){
@@ -1272,6 +1290,7 @@ $("btnSubmitForm").addEventListener("click", async ()=>{
   /* réponses non éliminatoires : tout le monde passe à la suite ;
      le score sert au classement côté Sigma Dynamix */
   $("stageFaq").classList.remove("hidden");
+  window.scrollTo(0, 0);        // la FAQ s'ouvre en haut, pas au bas du questionnaire
 });
 
 /* ================================================================
@@ -1470,10 +1489,10 @@ const FAQ = [
    Repérage par préfixe : certaines questions contiennent des guillemets
    échappés, une égalité stricte y serait fragile. */
 const FAQ_FIRST = [
+  "What happens if I am selected",
   "How is my variable compensation",
   "How does the minimum guarantee",
-  "How and when will I be paid",
-  "What happens if I am selected"
+  "How and when will I be paid"
 ];
 function faqOrdered(){
   const head = [];
@@ -1498,7 +1517,13 @@ function renderFaq(){
 renderFaq();
 $("btnFaqNext").addEventListener("click", ()=>{
   $("stageFaq").classList.add("hidden");
+  $("stageCommit").classList.remove("hidden");
+  window.scrollTo(0, 0);
+});
+$("btnCommitYes").addEventListener("click", ()=>{
+  $("stageCommit").classList.add("hidden");
   $("stagePres").classList.remove("hidden");
+  window.scrollTo(0, 0);
 });
 
 /* ================================================================
@@ -2004,7 +2029,7 @@ function say(text){
   if(!voiceOn || !("speechSynthesis" in window)){ showCaption(text); return; }
   const u = new SpeechSynthesisUtterance(text);
   if(demoVoice) u.voice = demoVoice;
-  u.lang = "en-US"; u.rate = 0.97; u.pitch = 0.92;
+  u.lang = "en-US"; u.rate = 1.26; u.pitch = 0.92;   // +30 % pour suivre le replay accelere
   u.onstart = ()=>showCaption(text);   // le sous-titre s'affiche quand la phrase démarre
   speechSynthesis.speak(u);            // file d'attente : ne coupe plus la phrase en cours
 }
