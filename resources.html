@@ -320,7 +320,7 @@ footer::before{
       <div class="soft-main">
         <div class="ver">
           <h3>Sigma Dynamix Terminal</h3>
-          <span class="tag-live" id="verTag">v1.0.0</span>
+          <span class="tag-live" id="verTag">—</span>
         </div>
         <p style="color:var(--muted);margin:0;max-width:52ch">The desktop application you use to receive authorization signals and place your trades during the session.</p>
 
@@ -420,12 +420,10 @@ const CFG = {
   ANON_KEY     : "sb_publishable_T1pafKvZ69IHji77doaGSw_3JTsSQS9",
   FUNCTION     : "get-resource",
   SHOW_TERMINAL: true,
-  BUILD        : { version:"v1.0.0", sizeMB:"—", date:"—" }, // renseigné par la fonction si dispo
 };
 
-const CHANGELOG = [
-  { date:"2026-08-14", text:"Build v2.3.11.35." },
-];
+// Version, taille, date et note de version sont lues dans la table
+// terminal_builds : rien à modifier ici lors d'une nouvelle livraison.
 
 /* ---------- rendu ---------- */
 const card = (t, i) => `
@@ -446,12 +444,17 @@ grid2.innerHTML = GUIDES.map(card).join("");
 
 if (!CFG.SHOW_TERMINAL) document.getElementById("software").hidden = true;
 
-document.getElementById("changelog").innerHTML = CHANGELOG.map(c=>
-  `<li><span class="d">${c.date}</span><span>${c.text}</span></li>`).join("");
-document.getElementById("verTag").textContent = CFG.BUILD.version;
-document.getElementById("mSize").textContent  = CFG.BUILD.sizeMB === "—" ? "— MB" : CFG.BUILD.sizeMB + " MB";
-document.getElementById("mDate").textContent  = CFG.BUILD.date;
-document.getElementById("yr").textContent     = new Date().getFullYear();
+document.getElementById("yr").textContent = new Date().getFullYear();
+
+/* Remplit la carte terminal avec le build renvoyé par la fonction. */
+function showBuild(b){
+  if (!b) return;
+  if (b.version) document.getElementById("verTag").textContent = b.version;
+  if (b.sizeMB)  document.getElementById("mSize").textContent  = b.sizeMB + " MB";
+  if (b.date)    document.getElementById("mDate").textContent  = b.date;
+  document.getElementById("changelog").innerHTML =
+    `<li><span class="d">${b.date ?? ""}</span><span>${b.notes ?? "Current build."}</span></li>`;
+}
 
 /* ---------- modale contact ---------- */
 const cModal = document.getElementById("contactModal");
@@ -565,6 +568,7 @@ function unlock(label, until){
   if (!CODE) return lock(null);
   try{
     const d = await callFn({ kind:"check" });
+    showBuild(d.build);
     unlock(d.label, d.accessUntil);
   }catch(e){
     CODE = null;
@@ -581,6 +585,7 @@ gateBtn.addEventListener("click", async () => {
   try{
     const d = await callFn({ kind:"check" });
     try{ sessionStorage.setItem(SKEY, CODE); }catch{}
+    showBuild(d.build);
     unlock(d.label, d.accessUntil);
   }catch(e){
     CODE = null;
@@ -598,9 +603,7 @@ btn?.addEventListener("click", async () => {
     const d = await callFn({ kind:"terminal" });
     if (!d.url) throw new Error("Link unavailable");
 
-    if (d.version) document.getElementById("verTag").textContent = d.version;
-    if (d.sizeMB)  document.getElementById("mSize").textContent  = d.sizeMB + " MB";
-    if (d.date)    document.getElementById("mDate").textContent  = d.date;
+    showBuild(d);
 
     if (d.external){
       window.open(d.url, "_blank", "noopener");
