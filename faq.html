@@ -57,23 +57,8 @@ tailwind.config = {
     *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
   }
 
-  /* ══ SÉPARATEURS DE SECTION — A3 · hairline dégradée, très fondue ══ */
+  /* ══ SÉPARATEUR — conservé uniquement pour le pied de page (.sep-t) ══ */
 
-  /* Diffusion sur 5px, pic d'opacité à 0.13, et le trait n'est
-     franchement lisible que sur le tiers central. */
-  .sep {
-    height: 5px;
-    background: linear-gradient(180deg,
-      rgba(140,163,197,0)   0%,
-      rgba(140,163,197,.13) 50%,
-      rgba(140,163,197,0)   100%);
-    -webkit-mask-image: linear-gradient(90deg,
-      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
-      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
-            mask-image: linear-gradient(90deg,
-      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
-      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
-  }
   .sep-t { position: relative; }
   .sep-t::before {
     content: ""; position: absolute; left: 0; right: 0; top: -2px; height: 5px;
@@ -131,10 +116,9 @@ tailwind.config = {
   </div>
 </section>
 
-<div class="sep" role="presentation" aria-hidden="true"></div>
 
 <!-- ══ 01 · SELECTION PROCESS ══ -->
-<section id="process" class="py-16 lg:py-24">
+<section id="process" class="py-[50px]">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
 
     <div class="flex items-center gap-4">
@@ -242,10 +226,9 @@ tailwind.config = {
   </div>
 </section>
 
-<div class="sep" role="presentation" aria-hidden="true"></div>
 
 <!-- ══ 02 · TRADING MECHANICS ══ -->
-<section id="mechanics" class="py-16 lg:py-24">
+<section id="mechanics" class="py-[50px]">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
 
     <div class="flex items-center gap-4">
@@ -340,10 +323,9 @@ tailwind.config = {
   </div>
 </section>
 
-<div class="sep" role="presentation" aria-hidden="true"></div>
 
 <!-- ══ 03 · COMPENSATION ══ -->
-<section id="compensation" class="py-16 lg:py-24">
+<section id="compensation" class="py-[50px]">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
 
     <div class="flex items-center gap-4">
@@ -426,10 +408,9 @@ tailwind.config = {
   </div>
 </section>
 
-<div class="sep" role="presentation" aria-hidden="true"></div>
 
 <!-- ══ CTA ══ -->
-<section class="py-16 lg:py-20">
+<section class="py-[50px]">
   <div class="mx-auto max-w-site px-4 text-center sm:px-6 lg:px-8">
     <h2 class="disp tight text-[24px] font-semibold">Still have a question?</h2>
     <p class="mx-auto mt-3 max-w-lg text-[15px] leading-relaxed text-muted">
@@ -443,7 +424,6 @@ tailwind.config = {
 </main>
 
 
-<div class="sep" role="presentation" aria-hidden="true"></div>
 
 <footer>
   <div class="mx-auto max-w-site px-4 py-14 sm:px-6 lg:px-8">
