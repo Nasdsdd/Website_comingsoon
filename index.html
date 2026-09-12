@@ -17,11 +17,11 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
-        void:   '#06080F', /* deepest ground — nav, footer, alternating bands */
-        navy:   '#0B1223', /* page background — the resources dark blue        */
-        panel:  '#0E1729', /* cards, surfaces                                  */
-        line:   'rgba(148,163,184,0.14)',
-        strong: 'rgba(148,163,184,0.26)',
+        void:   '#080C17', /* deepest ground — nav, footer, alternating bands */
+        navy:   '#080C17', /* page background — the resources dark blue        */
+        panel:  '#0F1728', /* cards, surfaces                                  */
+        line:   'rgba(140,163,197,0.14)',
+        strong: 'rgba(140,163,197,0.26)',
         fg:     '#E9EEF8', /* text                                             */
         muted:  '#93A2BD', /* secondary text                                   */
         blue:   '#0060F8', /* brand blue — primary actions, matches the logo   */
@@ -42,7 +42,7 @@ tailwind.config = {
 </script>
 <style>
   html { -webkit-text-size-adjust: 100%; }
-  body { background-color: #06080F; }
+  body { background-color: #080C17; }
   ::selection { background: #0060F8; color: #F8F8F8; }
   /* Every figure a reader parses is set in Mono — fixed advance keeps digits from shifting. */
   .num { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-variant-numeric: tabular-nums; }
@@ -55,6 +55,37 @@ tailwind.config = {
     html { scroll-behavior: auto; }
     .reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
     *, *::before, *::after { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+  }
+
+  /* ══ SÉPARATEURS DE SECTION — A3 · hairline dégradée, très fondue ══ */
+
+  /* Même construction que A2, réglée plus bas : diffusion sur 5px,
+     pic d'opacité à 0.13, et le trait n'est franchement lisible
+     que sur le tiers central. */
+  .sep {
+    height: 5px;
+    background: linear-gradient(180deg,
+      rgba(140,163,197,0)   0%,
+      rgba(140,163,197,.13) 50%,
+      rgba(140,163,197,0)   100%);
+    -webkit-mask-image: linear-gradient(90deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
+      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(90deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
+      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
+  }
+  .sep-t { position: relative; }
+  .sep-t::before {
+    content: ""; position: absolute; left: 0; right: 0; top: -2px; height: 5px;
+    background: linear-gradient(180deg,
+      rgba(140,163,197,0)   0%,
+      rgba(140,163,197,.13) 50%,
+      rgba(140,163,197,0)   100%);
+    -webkit-mask-image: linear-gradient(90deg,
+      #000 0%, rgba(0,0,0,.40) 45%, rgba(0,0,0,.08) 72%, rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(90deg,
+      #000 0%, rgba(0,0,0,.40) 45%, rgba(0,0,0,.08) 72%, rgba(0,0,0,0) 100%);
   }
 </style>
 </head>
@@ -91,11 +122,9 @@ tailwind.config = {
 <main id="main">
 
 <!-- ══ HERO ══ -->
-<section class="relative overflow-hidden border-b border-line">
+<section class="relative overflow-hidden">
   <div class="pointer-events-none absolute inset-0" aria-hidden="true"
-       style="background:radial-gradient(ellipse 70% 60% at 50% -10%, rgba(0,96,248,0.16) 0%, rgba(6,8,15,0) 70%)"></div>
-  <div class="pointer-events-none absolute inset-0" aria-hidden="true"
-       style="background-image:linear-gradient(rgba(148,163,184,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(148,163,184,.10) 1px,transparent 1px);background-size:88px 88px;mask-image:radial-gradient(ellipse 70% 60% at 50% 0%,#000 40%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 0%,#000 40%,transparent 100%)"></div>
+       style="background:radial-gradient(ellipse 88% 67% at 50% -19%, rgba(0,96,248,0.200) 0%, rgba(8,12,23,0) 71%)"></div>
 
   <div class="relative mx-auto max-w-site px-4 pb-24 pt-20 sm:px-6 sm:pt-28 lg:px-8 lg:pb-32 lg:pt-36">
     <p class="reveal flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.22em] text-blue">
@@ -126,8 +155,10 @@ tailwind.config = {
   </div>
 </section>
 
+<div class="sep" role="presentation" aria-hidden="true"></div>
+
 <!-- ══ HOW WE OPERATE ══ -->
-<section id="operate" class="border-b border-line py-24 lg:py-32">
+<section id="operate" class="py-24 lg:py-32">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
     <div class="max-w-2xl">
       <p class="font-mono text-[11px] uppercase tracking-[0.22em] text-blue">How we operate</p>
@@ -175,7 +206,7 @@ tailwind.config = {
     </ol>
 
     <!-- ══ SELECTION PROCESS · bloc déplaçable d'un seul tenant ══ -->
-    <div class="mt-24 border-t border-line pt-16 lg:mt-28 lg:pt-20">
+    <div class="sep-t mt-24 pt-16 lg:mt-28 lg:pt-20">
 
       <div class="max-w-2xl">
         <p class="font-mono text-[11px] uppercase tracking-[0.22em] text-blue">Selection process</p>
@@ -244,8 +275,10 @@ tailwind.config = {
   </div>
 </section>
 
+<div class="sep" role="presentation" aria-hidden="true"></div>
+
 <!-- ══ THE DESK ══ -->
-<section id="desk" class="border-b border-line py-24 lg:py-32">
+<section id="desk" class="py-24 lg:py-32">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
     <div class="grid gap-16 lg:grid-cols-2 lg:gap-24">
       <div class="reveal">
@@ -307,8 +340,10 @@ tailwind.config = {
   </div>
 </section>
 
+<div class="sep" role="presentation" aria-hidden="true"></div>
+
 <!-- ══ TERMINAL ══ -->
-<section id="terminal" class="border-b border-line py-24 lg:py-32">
+<section id="terminal" class="py-24 lg:py-32">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
     <div class="grid gap-14 lg:grid-cols-[1fr_1.05fr] lg:items-center lg:gap-20">
       <div class="reveal">
@@ -374,8 +409,10 @@ tailwind.config = {
   </div>
 </section>
 
+<div class="sep" role="presentation" aria-hidden="true"></div>
+
 <!-- ══ CAREERS ══ -->
-<section id="careers" class="border-b border-line py-24 lg:py-32">
+<section id="careers" class="py-24 lg:py-32">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
     <div class="max-w-2xl">
       <p class="font-mono text-[11px] uppercase tracking-[0.22em] text-blue">Careers</p>
@@ -426,12 +463,14 @@ tailwind.config = {
   </div>
 </section>
 
+<div class="sep" role="presentation" aria-hidden="true"></div>
+
 <!-- ══ CTA ══ -->
 <section class="py-24 lg:py-32">
   <div class="mx-auto max-w-site px-4 sm:px-6 lg:px-8">
     <div class="reveal relative overflow-hidden rounded-card border border-line bg-panel px-8 py-14 text-center sm:px-12 lg:py-20">
       <div class="pointer-events-none absolute inset-0" aria-hidden="true"
-           style="background:radial-gradient(ellipse 60% 80% at 50% 0%, rgba(0,96,248,0.14) 0%, rgba(14,23,41,0) 70%)"></div>
+           style="background:radial-gradient(ellipse 60% 80% at 50% 0%, rgba(0,96,248,0.140) 0%, rgba(8,12,23,0) 70%)"></div>
       <div class="relative">
         <h2 class="disp tight mx-auto max-w-2xl text-3xl font-semibold sm:text-4xl">Already onboarded?</h2>
         <p class="mx-auto mt-5 max-w-xl text-base leading-relaxed text-muted">
@@ -449,8 +488,10 @@ tailwind.config = {
 
 </main>
 
+<div class="sep" role="presentation" aria-hidden="true"></div>
+
 <!-- ══ FOOTER ══ -->
-<footer class="border-t border-line">
+<footer>
   <div class="mx-auto max-w-site px-4 py-14 sm:px-6 lg:px-8">
     <div class="flex flex-col justify-between gap-10 md:flex-row">
       <div>

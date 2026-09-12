@@ -13,11 +13,11 @@
 <style>
   :root {
     /* Same tokens as the home page, resources and the operator login. */
-    --void:   #06080F;
-    --navy:   #0B1223;
-    --panel:  #0E1729;
-    --line:   rgba(148,163,184,0.14);
-    --strong: rgba(148,163,184,0.26);
+    --void:   #080C17;
+    --navy:   #080C17;
+    --panel:  #0F1728;
+    --line:   rgba(140,163,197,0.14);
+    --strong: rgba(140,163,197,0.26);
     --text:   #E9EEF8;
     --muted:  #93A2BD;
     --faint:  #5C6C88;
@@ -43,19 +43,11 @@
 
   /* ---------- background ---------- */
   .layer { position: fixed; inset: 0; pointer-events: none; }
+  /* Un seul halo, large et remonte au-dessus du bord haut — pas de quadrillage. */
   .l-gradient {
     z-index: 0;
-    background: radial-gradient(circle at 50% 0%,
-      rgba(0,96,248,0.12) 0%, rgba(6,8,15,1) 55%, var(--void) 100%);
-  }
-  .l-grid {
-    z-index: 1;
-    background-image:
-      linear-gradient(rgba(148,163,184,0.07) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(148,163,184,0.07) 1px, transparent 1px);
-    background-size: 72px 72px;
-    mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 68%);
-    -webkit-mask-image: radial-gradient(circle at 50% 0%, #000 0%, transparent 68%);
+    background: radial-gradient(ellipse 88% 62% at 50% -14%,
+      rgba(0,96,248,0.20) 0%, rgba(8,12,23,0) 71%);
   }
   header, main, footer { position: relative; z-index: 4; }
 
@@ -64,7 +56,7 @@
     position: sticky; top: 0; z-index: 50;
     display: flex; align-items: center; justify-content: space-between;
     height: 64px; padding: 0 40px;
-    background: rgba(6,8,15,.85);
+    background: rgba(8,12,23,.85);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--line);
   }
@@ -127,16 +119,43 @@
   strong { color: var(--text); font-weight: 600; }
   main a { color: var(--blue); text-decoration: none; border-bottom: 1px solid rgba(0,96,248,0.45); }
   main a:hover { border-bottom-color: var(--blue); }
-  hr { border: 0; height: 1px; background: var(--line); margin: 44px 0; }
+  /* ══ SÉPARATEURS — A3 · hairline dégradée, très fondue ══
+     Diffusion sur 5px, pic d'opacité à 0.13, lisible surtout au centre. */
+  hr {
+    border: 0; height: 5px; margin: 44px 0;
+    background: linear-gradient(180deg,
+      rgba(140,163,197,0)   0%,
+      rgba(140,163,197,.13) 50%,
+      rgba(140,163,197,0)   100%);
+    -webkit-mask-image: linear-gradient(90deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
+      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(90deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
+      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
+  }
 
   /* ---------- footer ---------- */
   footer {
+    position: relative;
     display: flex; align-items: center; justify-content: flex-end;
     gap: 16px; padding: 24px 40px;
-    border-top: 1px solid var(--line);
     background: var(--void);
     font-family: var(--mono); font-size: 10.5px;
     letter-spacing: 0.18em; text-transform: uppercase; color: var(--faint);
+  }
+  footer::before {
+    content: ""; position: absolute; left: 0; right: 0; top: -2px; height: 5px;
+    background: linear-gradient(180deg,
+      rgba(140,163,197,0)   0%,
+      rgba(140,163,197,.13) 50%,
+      rgba(140,163,197,0)   100%);
+    -webkit-mask-image: linear-gradient(90deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
+      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(90deg,
+      rgba(0,0,0,0) 0%, rgba(0,0,0,.08) 20%, rgba(0,0,0,.42) 36%,
+      #000 50%, rgba(0,0,0,.42) 64%, rgba(0,0,0,.08) 80%, rgba(0,0,0,0) 100%);
   }
   footer a { color: var(--faint); text-decoration: none; border: 0; transition: color .2s ease; }
   footer a:hover { color: var(--muted); }
@@ -155,7 +174,6 @@
 </head>
 <body>
   <div class="layer l-gradient"></div>
-  <div class="layer l-grid"></div>
 
   <header>
     <a class="brand" href="index.html" aria-label="Sigma Dynamix — home">

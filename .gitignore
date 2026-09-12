@@ -1,1 +1,29 @@
 .DS_Store
+
+# Ne jamais commiter le roster : il contient les mots de passe des opérateurs.
+config/roster.json
+
+# Les exports bruts restent en local — seuls les fichiers chiffrés de data/ sont publiés.
+incoming/*.csv
+
+# Ne pas publier : données en clair / maquette non branchée.
+dashboard-preview.html
+admin.html
+
+# Divers
+.DS_Store
+__pycache__/
+*.pyc
+
+# Documentation interne — pas sur le site public.
+README.md
+PROCEDURE.md
+
+# Données de paiement — pas sur le site public.
+config/payouts.csv
+cat ~/.gitignore
+25_Sigma_Dynamix_Publier_Performances_Operateurs.html
+
+# Configuration et outils internes — pas sur le site public.
+config/
+tools/
